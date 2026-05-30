@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TOEIC Part 5 核心挑戰學習平台</title>
+    <title>TOEIC 學習平台</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -626,7 +626,23 @@
                 console.error("Supabase 初始化失敗，將降級為本地模式：", err);
             }
         }
+(async () => {
+    const {
+        data: { session }
+    } = await supabaseClient.auth.getSession();
 
+    if (session?.user) {
+        currentUser = session.user;
+
+        cloudStatusIcon.className =
+            "fa-solid fa-cloud-arrow-up text-emerald-500";
+
+        cloudUserText.textContent =
+            session.user.email;
+
+        loginLabelBtn.textContent = "登出";
+    }
+})();
         // High-fidelity 600-700 level TOEIC Part 5 items (40 questions total)
         const masterQuestionsBank = [
             {
@@ -1548,7 +1564,12 @@
         cloudAuthBtn.addEventListener('click', async () => {
             if (currentUser) {
                 showCustomConfirm("您確定要登出目前雲端帳號嗎？數據將保留在雲端與此瀏覽器中。", async () => {
-                    await supabaseClient.auth.signOut();
+                   const { error } =
+                       await supabaseClient.auth.signOut();
+                    if (error) {
+                        showToast(error.message);
+                        return;
+                    }
                     showToast("已成功安全登出！");
                 }, "確認登出");
             } else {
