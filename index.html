@@ -595,6 +595,21 @@
         </div>
     </div>
 
+    <!-- Custom Confirm Dialog Modal to bypass iframe constraints and replace native confirm() -->
+    <div id="customConfirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden animate-fade-in">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-sm w-full p-6 border border-slate-100 dark:border-slate-700/50 shadow-2xl space-y-4 text-center">
+            <div class="mx-auto w-12 h-12 bg-amber-50 dark:bg-amber-950/40 text-amber-500 rounded-full flex items-center justify-center text-xl">
+                <i class="fa-solid fa-circle-question"></i>
+            </div>
+            <h3 class="font-black text-base text-slate-800 dark:text-white" id="confirmModalTitle">確認操作</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed" id="confirmModalMessage">您確定要執行此操作嗎？</p>
+            <div class="flex gap-2 pt-2">
+                <button id="confirmCancelBtn" class="flex-1 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition">取消</button>
+                <button id="confirmOkBtn" class="flex-1 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold transition shadow-md shadow-brand-500/10">確定</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ----------------- Supabase 雲端同步設定 -----------------
         const SUPABASE_URL = "https://ronmrjxcygsktuxmoapc.supabase.co"; 
@@ -1052,7 +1067,7 @@
                     { key: "D", text: "themselves" }
                 ],
                 correctAnswer: "B",
-                explanation: `空格後接名詞 weekly progress reports，需要使用複數代名詞的「所有格」來修飾它。\n\n(B) their 為所有格。`,
+                explanation: `空格後接名詞 weekly progress reports，需要使用裝數代名詞的「所有格」來修飾它。\n\n(B) their 為所有格。`,
                 vocabulary: [{ word: "submit", phonetic: "/səbˈmɪt/", meaning: "提交、遞交 (v.)", example: "Please submit your monthly reports to the department manager.", exampleTranslation: "請將您的月度報告提交給部門經理。" }],
                 translation: "專案經理要求團隊成員在週五下午之前提交他們的週進度報告。"
             },
@@ -1244,11 +1259,6 @@
         let currentTab = 'quiz'; // 'quiz' or 'wrong_review'
         let quizPhase = 'practice'; // 'practice' or 'solution'
 
-        // 3-Correct Mastery System wrong questions list
-        let wrongQuestionsReview = [];
-        let currentReviewIndex = 0;
-        let hasAnsweredCurrentReview = false;
-
         // Default Vocabulary List with mastery & timestamps
         const defaultNotebook = [
             { 
@@ -1280,7 +1290,12 @@
             }
         ];
         
-        let customNotebook = [];
+        // Immediately load Notebook and Wrong list from localStorage on script parse to prevent delay / data wipe
+        let customNotebook = JSON.parse(localStorage.getItem('toeic_custom_notebook')) || [...defaultNotebook];
+        let wrongQuestionsReview = JSON.parse(localStorage.getItem('toeic_wrong_review_v2')) || [];
+        
+        let currentReviewIndex = 0;
+        let hasAnsweredCurrentReview = false;
 
         // Flashcards study queue variables
         let reviewQueue = [];
@@ -1407,6 +1422,27 @@
         const googleAuthBtn = document.getElementById('googleAuthBtn');
         const closeAuthModal = document.getElementById('closeAuthModal');
 
+        // Dialog callback variables
+        let customConfirmCallback = null;
+        
+        function showCustomConfirm(message, callback, title = "確認操作") {
+            document.getElementById('confirmModalTitle').textContent = title;
+            document.getElementById('confirmModalMessage').textContent = message;
+            customConfirmCallback = callback;
+            document.getElementById('customConfirmModal').classList.remove('hidden');
+        }
+
+        document.getElementById('confirmCancelBtn').addEventListener('click', () => {
+            document.getElementById('customConfirmModal').classList.add('hidden');
+            customConfirmCallback = null;
+        });
+
+        document.getElementById('confirmOkBtn').addEventListener('click', () => {
+            document.getElementById('customConfirmModal').classList.add('hidden');
+            if (customConfirmCallback) customConfirmCallback();
+            customConfirmCallback = null;
+        });
+
         // Configure Theme settings
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
@@ -1441,7 +1477,7 @@
                     if (data.wrong_review) wrongQuestionsReview = data.wrong_review;
                 } else {
                     // 初始化雲端資料庫
-                    customNotebook = JSON.parse(localStorage.getItem('toeic_custom_notebook')) || defaultNotebook;
+                    customNotebook = JSON.parse(localStorage.getItem('toeic_custom_notebook')) || [...defaultNotebook];
                     wrongQuestionsReview = JSON.parse(localStorage.getItem('toeic_wrong_review_v2')) || [];
                     await saveCloudData();
                 }
@@ -1499,7 +1535,7 @@
                     cloudUserText.textContent = "本地模式";
                     loginLabelBtn.textContent = "登入雲端";
                     
-                    customNotebook = JSON.parse(localStorage.getItem('toeic_custom_notebook')) || defaultNotebook;
+                    customNotebook = JSON.parse(localStorage.getItem('toeic_custom_notebook')) || [...defaultNotebook];
                     wrongQuestionsReview = JSON.parse(localStorage.getItem('toeic_wrong_review_v2')) || [];
                     
                     renderNotebookList();
@@ -1508,13 +1544,13 @@
             });
         }
 
-        // Auth Buttons Click events
+        // Auth Buttons Click events (Using customConfirm instead of native confirm() to fix logout bug in iframe)
         cloudAuthBtn.addEventListener('click', async () => {
             if (currentUser) {
-                if (confirm("您確定要登出目前雲端帳號嗎？數據將保留在雲端與此瀏覽器中。")) {
+                showCustomConfirm("您確定要登出目前雲端帳號嗎？數據將保留在雲端與此瀏覽器中。", async () => {
                     await supabaseClient.auth.signOut();
                     showToast("已成功安全登出！");
-                }
+                }, "確認登出");
             } else {
                 if (!supabaseClient) {
                     showToast("尚未設定 Supabase URL 與 Anon Key！請先參考發布設定指南。");
@@ -1573,8 +1609,36 @@
             }
         });
 
+        // Save answersState, questions and current progress indexes to prevent refresh data loss
+        function saveQuizProgress() {
+            localStorage.setItem('toeic_current_questions', JSON.stringify(questions));
+            localStorage.setItem('toeic_answers_state', JSON.stringify(answersState));
+            localStorage.setItem('toeic_current_index', currentIndex.toString());
+            localStorage.setItem('toeic_quiz_phase', quizPhase);
+        }
+
+        function loadQuizProgress() {
+            const savedQuestions = localStorage.getItem('toeic_current_questions');
+            const savedAnswers = localStorage.getItem('toeic_answers_state');
+            const savedIndex = localStorage.getItem('toeic_current_index');
+            const savedPhase = localStorage.getItem('toeic_quiz_phase');
+
+            if (savedQuestions && savedAnswers && savedIndex && savedPhase) {
+                questions = JSON.parse(savedQuestions);
+                answersState = JSON.parse(savedAnswers);
+                currentIndex = parseInt(savedIndex, 10);
+                quizPhase = savedPhase;
+                updateScoreText();
+                initNavigation();
+                renderQuestion();
+            } else {
+                // If there is no cache, draw 20 questions quietly on load
+                drawRandom20Questions(false);
+            }
+        }
+
         // Shuffler: Draw 20 random items from the master bank
-        function drawRandom20Questions() {
+        function drawRandom20Questions(showToastNotify = true) {
             const shuffledPool = [...masterQuestionsBank];
             for (let i = shuffledPool.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -1586,20 +1650,26 @@
             answersState = Array(20).fill(null);
             quizPhase = 'practice';
             
+            saveQuizProgress();
             updateScoreText();
             initNavigation();
             renderQuestion();
-            showToast("🎯 已為您隨機抽選 20 題全新測驗！");
+            if (showToastNotify) {
+                showToast("🎯 已為您隨機抽選 20 題全新測驗！");
+            }
         }
 
         refreshQuestionsBtn.addEventListener('click', () => {
             if (quizPhase === 'practice') {
                 const filledCount = answersState.filter(a => a !== null).length;
-                if (filledCount > 0 && !confirm("您正在進行測驗中，刷新將遺失目前的進度。確定要換一批題目嗎？")) {
+                if (filledCount > 0) {
+                    showCustomConfirm("您正在進行測驗中，換題將遺失目前的進度。確定要換一批題目嗎？", () => {
+                        drawRandom20Questions(true);
+                    }, "確認換一批題目");
                     return;
                 }
             }
-            drawRandom20Questions();
+            drawRandom20Questions(true);
         });
 
         // Mobile drawer overlay systems
@@ -1677,6 +1747,7 @@
                 if (quizPhase === 'solution') {
                     dot.addEventListener('click', () => {
                         currentIndex = i;
+                        saveQuizProgress();
                         renderQuestion();
                     });
                 } else {
@@ -1805,6 +1876,7 @@
             answersState[currentIndex] = {
                 userSelection: selectedKey
             };
+            saveQuizProgress();
             renderQuestion();
         }
 
@@ -1865,6 +1937,7 @@
         prevBtn.addEventListener('click', () => {
             if (quizPhase === 'solution' && currentIndex > 0) {
                 currentIndex--;
+                saveQuizProgress();
                 renderQuestion();
             }
         });
@@ -1876,6 +1949,7 @@
                     return;
                 }
                 currentIndex++;
+                saveQuizProgress();
                 renderQuestion();
                 updateScoreText();
             } else {
@@ -1887,6 +1961,7 @@
                     evaluateQuizSummary();
                 } else {
                     currentIndex = 0;
+                    saveQuizProgress();
                     renderQuestion();
                 }
             }
@@ -1913,6 +1988,7 @@
             });
 
             quizPhase = 'solution';
+            saveQuizProgress();
             updateScoreText();
             updateWrongCountBadge();
             initNavigation();
@@ -1980,6 +2056,7 @@
         viewSolutionsBtn.addEventListener('click', () => {
             closeSummaryModal();
             currentIndex = 0;
+            saveQuizProgress();
             renderQuestion();
             explanationPanel.scrollIntoView({ behavior: 'smooth' });
         });
@@ -2431,13 +2508,14 @@
             showToast(`已移除單字: "${removedWord}"`);
         };
 
+        // Custom Confirm instead of native confirm() to clear all vocabulary cards
         clearAllVocabBtn.addEventListener('click', async () => {
             if (customNotebook.length === 0) return;
-            if (confirm("您確定要完全清空所有自訂字卡嗎？")) {
+            showCustomConfirm("您確定要完全清空所有自訂字卡嗎？", async () => {
                 customNotebook = [];
                 await saveNotebook();
                 showToast("單字本已完全清空！");
-            }
+            }, "確認清空");
         });
 
         // ANKI FLASHCARDS STUDY ENGINE
@@ -2647,7 +2725,7 @@
         }
 
         window.onload = function() {
-            drawRandom20Questions();
+            loadQuizProgress();
             renderNotebookList();
             updateWrongCountBadge();
         }
