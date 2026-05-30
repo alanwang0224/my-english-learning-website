@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TOEIC Part 5 核心挑戰學習平台</title>
+    <title>TOEIC  核心挑戰學習平台</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1471,7 +1471,34 @@
                 phase: userIdOrGuest === "guest" ? "toeic_guest_quiz_phase" : `toeic_phase_user_${userIdOrGuest}`
             };
         }
+        // --- 強制徹底清除 Supabase 殘留憑證，解決登入/登出死鎖問題 ---
+        function clearSupabaseTokens() {
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.includes('auth-token') || key.includes('supabase'))) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(k => localStorage.removeItem(k));
+        }
 
+        // --- 在登出按鈕事件中呼叫： ---
+        cloudAuthBtn.addEventListener('click', async () => {
+            if (currentUser) {
+                showCustomConfirm("您確定要登出嗎？", async () => {
+                    try {
+                        await supabaseClient.auth.signOut();
+                    } finally {
+                        clearSupabaseTokens(); // 關鍵：確保本地無任何殘留
+                        triggerGuestFallback(); // 回到乾淨的本地模式
+                        showToast("已成功安全登出！");
+                    }
+                }, "確認登出");
+            } else {
+                authModal.classList.remove('hidden');
+            }
+        });
         // ----------------- Supabase 雲端與本地快取資料同步流 -----------------
         async function fetchCloudData() {
             if (!supabaseClient || !currentUser) return;
