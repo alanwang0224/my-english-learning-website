@@ -1549,16 +1549,37 @@
             if (currentUser) {
                 showCustomConfirm("您確定要登出目前雲端帳號嗎？數據將保留在雲端與此瀏覽器中。", async () => {
                     await supabaseClient.auth.signOut();
-                    showToast("已成功安全登出！");
-                }, "確認登出");
-            } else {
-                if (!supabaseClient) {
-                    showToast("尚未設定 Supabase URL 與 Anon Key！請先參考發布設定指南。");
-                    return;
-                }
-                authModal.classList.remove('hidden');
+                     // signOut 成功後，onAuthStateChange 會自動觸發
+                // 但保險起見，手動強制重置 UI
+                currentUser = null;
+                cloudStatusIcon.className = "fa-solid fa-cloud text-slate-400";
+                cloudUserText.textContent = "本地模式";
+                loginLabelBtn.textContent = "登入雲端";
+                
+                // 重新載入本地資料
+                customNotebook = JSON.parse(
+                    localStorage.getItem('toeic_custom_notebook')
+                ) || [...defaultNotebook];
+                wrongQuestionsReview = JSON.parse(
+                    localStorage.getItem('toeic_wrong_review_v2')
+                ) || [];
+                
+                renderNotebookList();
+                updateWrongCountBadge();
+                showToast("已成功安全登出！");
+            } catch (err) {
+                console.error("登出失敗：", err);
+                showToast("登出時發生錯誤，請重新整理頁面。");
             }
-        });
+        }, "確認登出");
+    } else {
+        if (!supabaseClient) {
+            showToast("尚未設定 Supabase！");
+            return;
+        }
+        authModal.classList.remove('hidden');
+    }
+});
 
         closeAuthModal.addEventListener('click', () => {
             authModal.classList.add('hidden');
