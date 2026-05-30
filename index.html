@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+ㄍ<!DOCTYPE html>
 <html lang="zh-TW" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TOEIC Part 5 核心挑戰學習平台</title>
+    <title>TOEIC 學習平台</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -618,10 +618,15 @@
         let supabaseClient = null;
         let currentUser = null;
 
-        if (SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_URL !== "您的專案URL") {
-            try {
-                // 使用 CDN 提供的全域 supabase 物件建立我們的客戶端實例
-                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        supabaseClient = supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_ANON_KEY,
+            {
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true
+                }
             } catch (err) {
                 console.error("Supabase 初始化失敗，將降級為本地模式：", err);
             }
