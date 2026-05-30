@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TOEIC Part 5 核心挑戰學習平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        // --- 設定區：請確保貼入的字串為純 ASCII 字元，不要包含中文字或多餘空格 ---
+        const SUPABASE_URL = "https://ronmrjxcygsktuxmoapc.supabase.co"; 
+        const SUPABASE_ANON_KEY = "sb_publishable_MUWuuv_FU6eYEX-XkYxqow_Te6jjuMZ";
+
+        // 強制移除可能導致 Headers 錯誤的特殊字元，並統一變數名稱
+        const cleanKey = SUPABASE_ANON_KEY ? SUPABASE_ANON_KEY.trim().replace(/[^\x00-\x7F]/g, "") : "";
+
+        let supabaseClient = null;
+        if (SUPABASE_URL && cleanKey && SUPABASE_URL.startsWith('https')) {
+            supabaseClient = supabase.createClient(SUPABASE_URL, cleanKey);
+        }
+
+        // --- 核心邏輯 ---
+        async function fetchRandomQuestions(count) {
+            if (!supabaseClient) {
+                console.error("Supabase Client 未初始化，請檢查 API Key 是否正確");
+                return [];
+            }
+            try {
+                const { data, error } = await supabaseClient
+                    .rpc('get_random_questions', { row_count: count });
+                if (error) throw error;
+                return data;
+            } catch (err) {
+                console.error("題庫隨機抽題失敗:", err);
+                return [];
+            }
+        }
+
+        async function startAnkiSession() {
+            console.log("開始載入題目...");
+            const questions = await fetchRandomQuestions(10);
+            
+            if (questions && questions.length > 0) {
+                showToast(`成功載入 ${questions.length} 題！`);
+                console.log("題目資料：", questions);
+            } else {
+                showToast("未能載入題目，請確認資料庫是否有資料或 RPC 設定正確");
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = "fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl font-bold text-xs flex items-center space-x-2";
+            toast.innerHTML = `<i class="fa-solid fa-circle-info text-emerald-500"></i><span>${message}</span>`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2500);
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-4">TOEIC Part 5 核心挑戰學習平台</h1>
+        <div id="app-container">
+            <button onclick="startAnkiSession()" class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition">
+                開始測驗 (雲端版)
+            </button>
+        </div>
+    </div>
+</body>
+</html>
