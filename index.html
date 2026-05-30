@@ -2,7 +2,7 @@
 <html lang="zh-TW" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TOEIC Part 5 核心挑戰學習平台</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,6 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <!-- FontAwesome for gorgeous icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <script>
         tailwind.config = {
@@ -50,6 +52,7 @@
     <style>
         body {
             font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
@@ -77,7 +80,7 @@
             transform: rotateY(180deg);
         }
         .flip-card-inner {
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
         }
         .flipped .flip-card-inner {
@@ -91,74 +94,80 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-300">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-300 pb-12">
 
     <header class="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="bg-gradient-to-tr from-brand-600 to-indigo-500 text-white p-2.5 rounded-xl shadow-md shadow-brand-500/20">
-                    <i class="fa-solid fa-graduation-cap text-lg"></i>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+                <div class="bg-gradient-to-tr from-brand-600 to-indigo-500 text-white p-2 rounded-xl shadow-md shadow-brand-500/20">
+                    <i class="fa-solid fa-graduation-cap text-base"></i>
                 </div>
                 <div>
-                    <span class="font-bold text-lg bg-gradient-to-r from-brand-600 to-indigo-500 bg-clip-text text-transparent dark:from-brand-500 dark:to-indigo-400">TOEIC Master</span>
-                    <span class="text-xs block text-slate-500 dark:text-slate-400 font-medium">Part 5 實戰挑戰 (600-700分精準包)</span>
+                    <span class="font-bold text-base sm:text-lg bg-gradient-to-r from-brand-600 to-indigo-500 bg-clip-text text-transparent dark:from-brand-500 dark:to-indigo-400 block leading-none">TOEIC Master</span>
                 </div>
             </div>
             
-            <div class="flex items-center space-x-3">
-                <button id="themeToggle" class="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition" aria-label="Toggle Theme">
+            <div class="flex items-center space-x-2">
+                <!-- Supabase Cloud User Capsule -->
+                <button id="cloudAuthBtn" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-3 py-1.5 rounded-xl flex items-center space-x-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 h-9 transition">
+                    <i class="fa-solid fa-cloud text-brand-500" id="cloudStatusIcon"></i>
+                    <span id="cloudUserText" class="max-w-[110px] truncate">本機模式</span>
+                    <span class="text-[10px] bg-brand-600 text-white px-1.5 py-0.5 rounded-md" id="loginLabelBtn">登入雲端</span>
+                </button>
+
+                <button id="themeToggle" class="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition min-w-[40px] min-h-[40px] flex items-center justify-center" aria-label="Toggle Theme">
                     <i class="fa-solid fa-moon dark:hidden"></i>
                     <i class="fa-solid fa-sun hidden dark:inline"></i>
                 </button>
-                <button id="mobileVocabToggle" class="lg:hidden p-2 rounded-xl text-brand-600 dark:text-brand-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition relative" aria-label="Open Vocabulary">
+                <button id="mobileVocabToggle" class="lg:hidden p-2 rounded-xl text-brand-600 dark:text-brand-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition relative min-w-[40px] min-h-[40px] flex items-center justify-center" aria-label="Open Vocabulary">
                     <i class="fa-solid fa-book-bookmark"></i>
-                    <span id="vocabUpdateBadge" class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-emerald-500 rounded-full hidden border-2 border-white dark:border-slate-900 animate-pulse"></span>
+                    <span id="vocabUpdateBadge" class="absolute top-1 right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full hidden border-2 border-white dark:border-slate-900 animate-pulse"></span>
                 </button>
-                <div class="bg-slate-100 dark:bg-slate-800 px-3.5 py-1.5 rounded-xl flex items-center space-x-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                <div class="bg-slate-100 dark:bg-slate-800 px-3 py-2 rounded-xl flex items-center space-x-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 h-9">
                     <i class="fa-solid fa-bullseye text-brand-500"></i>
-                    <span id="scoreText">得分: 0 / 20</span>
+                    <span id="scoreText" class="whitespace-nowrap">得分: 0 / 20</span>
                 </div>
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         
         <!-- Navigation Tabs: Core Quiz vs. Wrong Review -->
-        <div class="flex border-b border-slate-200 dark:border-slate-800 mb-6 bg-white dark:bg-slate-800 rounded-2xl p-1 shadow-sm max-w-2xl mx-auto">
-            <button id="mainQuizTabBtn" class="flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 bg-brand-600 text-white shadow-md shadow-brand-500/10 flex items-center justify-center gap-2">
+        <div class="flex border border-slate-200 dark:border-slate-800 mb-5 bg-white dark:bg-slate-800 rounded-2xl p-1 shadow-sm max-w-2xl mx-auto h-11">
+            <button id="mainQuizTabBtn" class="flex-1 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 bg-brand-600 text-white shadow-md shadow-brand-500/10 flex items-center justify-center gap-1.5">
                 <i class="fa-solid fa-graduation-cap"></i>
-                <span>🎯 核心挑戰測驗</span>
+                <span>🎯 核心測驗</span>
             </button>
-            <button id="wrongReviewTabBtn" class="flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center justify-center gap-2 relative">
+            <button id="wrongReviewTabBtn" class="flex-1 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center justify-center gap-1.5 relative">
                 <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
-                <span>📝 錯題複習特訓區</span>
+                <span>📝 錯題特訓</span>
                 <span id="wrongQuestionsCountBadge" class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold hidden border border-white dark:border-slate-800 scale-90">0</span>
             </button>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start relative">
             
             <!-- Left Column: Primary Test Views -->
-            <div class="lg:col-span-7 space-y-6">
+            <div class="lg:col-span-7 space-y-5">
 
                 <!-- VIEW 1: Core Quiz Module -->
-                <div id="coreQuizContainer" class="space-y-6">
+                <div id="coreQuizContainer" class="space-y-5">
                     <!-- Progress Header -->
-                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                            <div class="flex flex-col gap-2">
-                                <div class="flex items-center space-x-3">
-                                    <span class="text-xs font-bold uppercase tracking-wider bg-brand-50 dark:bg-brand-900/40 text-brand-600 dark:text-brand-400 px-2.5 py-1 rounded-md" id="categoryBadge">
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                            <div class="flex flex-col gap-1">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider bg-brand-50 dark:bg-brand-900/40 text-brand-600 dark:text-brand-400 px-2.5 py-1 rounded-md" id="categoryBadge">
                                         題型分類
                                     </span>
-                                    <span class="text-sm font-medium text-slate-500 dark:text-slate-400" id="progressIndicator">
+                                    <span class="text-xs font-semibold text-slate-500 dark:text-slate-400" id="progressIndicator">
                                         第 1 題 / 共 20 題
                                     </span>
                                 </div>
                             </div>
                             <!-- Refresh / Draw New questions from Bank -->
-                            <button id="refreshQuestionsBtn" class="self-start sm:self-auto px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-slate-700 dark:hover:bg-slate-600 text-indigo-600 dark:text-indigo-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                            <button id="refreshQuestionsBtn" class="w-full sm:w-auto px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-slate-700 dark:hover:bg-slate-600 text-indigo-600 dark:text-indigo-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm min-h-[40px]">
                                 <i class="fa-solid fa-arrows-rotate animate-spin-hover"></i>
                                 <span>換一批題目 (抽選全新 20 題)</span>
                             </button>
@@ -167,28 +176,28 @@
                         <div class="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden mb-3">
                             <div id="progressBar" class="bg-gradient-to-r from-brand-500 to-indigo-500 h-full w-[5%] transition-all duration-300"></div>
                         </div>
-                        <div class="flex flex-wrap items-center gap-1.5 pt-1" id="navDots"></div>
+                        <!-- Responsive Grid for 20 Dots: Mobile-First double rows -->
+                        <div class="grid grid-cols-10 gap-1 sm:flex sm:flex-wrap sm:gap-1.5 pt-1" id="navDots"></div>
                     </div>
 
                     <!-- Active Question Card -->
-                    <div id="questionCard" class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-md transition-all duration-300">
-                        <h2 class="text-lg sm:text-xl font-bold mb-6 leading-relaxed text-slate-800 dark:text-white" id="questionText"></h2>
+                    <div id="questionCard" class="bg-white dark:bg-slate-800 p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-md transition-all duration-300">
+                        <h2 class="text-base sm:text-lg font-bold mb-5 leading-relaxed text-slate-800 dark:text-white" id="questionText"></h2>
 
-                        <div class="space-y-3" id="optionsContainer"></div>
+                        <div class="space-y-2.5" id="optionsContainer"></div>
 
-                        <div class="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-100 dark:border-slate-700/50">
-                            <!-- Left: Empty spacer for layout alignment -->
+                        <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 pt-5 border-t border-slate-100 dark:border-slate-700/50">
                             <div class="flex-1 hidden sm:block"></div>
-                            <button id="prevBtn" class="hidden px-5 py-2.5 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition flex items-center justify-center space-x-2">
+                            <button id="prevBtn" class="hidden w-full sm:w-auto px-5 py-3 rounded-xl font-medium text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition flex items-center justify-center space-x-2 min-h-[44px]">
                                 <i class="fa-solid fa-arrow-left"></i>
                                 <span>上一題</span>
                             </button>
-                            <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto ml-auto">
-                                <button id="showExplanationBtn" class="hidden w-full sm:w-auto px-5 py-2.5 rounded-xl font-medium text-sm text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/30 transition flex items-center justify-center space-x-2">
+                            <div class="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto ml-auto">
+                                <button id="showExplanationBtn" class="hidden w-full sm:w-auto px-5 py-3 rounded-xl font-semibold text-sm text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/30 transition flex items-center justify-center space-x-2 min-h-[44px]">
                                     <i class="fa-solid fa-circle-info"></i>
                                     <span>查看詳解</span>
                                 </button>
-                                <button id="nextBtn" class="w-full sm:w-auto px-6 py-2.5 bg-brand-600 hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-600 text-white rounded-xl font-medium text-sm transition shadow-lg shadow-brand-500/20 flex items-center justify-center space-x-2">
+                                <button id="nextBtn" class="w-full sm:w-auto px-6 py-3 bg-brand-600 hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-600 text-white rounded-xl font-bold text-sm transition shadow-lg shadow-brand-500/20 flex items-center justify-center space-x-2 min-h-[44px]">
                                     <span>下一題</span>
                                     <i class="fa-solid fa-arrow-right"></i>
                                 </button>
@@ -197,39 +206,39 @@
                     </div>
 
                     <!-- Explanation Panel -->
-                    <div id="explanationPanel" class="hidden bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-100 dark:border-emerald-900/30 rounded-2xl p-6 sm:p-8 space-y-6 transition-all duration-300 animate-fade-in">
+                    <div id="explanationPanel" class="hidden bg-emerald-50/40 dark:bg-emerald-950/10 border border-emerald-100 dark:border-emerald-900/30 rounded-2xl p-5 sm:p-7 space-y-5 transition-all duration-300 animate-fade-in">
                         <div class="flex items-start space-x-3">
-                            <div class="bg-emerald-500 text-white p-1.5 rounded-lg mt-0.5 shadow-md shadow-emerald-500/20">
-                                <i class="fa-solid fa-square-check text-base"></i>
+                            <div class="bg-emerald-500 text-white p-2 rounded-lg mt-0.5 shadow-md shadow-emerald-500/20">
+                                <i class="fa-solid fa-square-check text-sm"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-emerald-800 dark:text-emerald-400 text-lg">答案與文法解析</h3>
-                                <p class="text-sm mt-1 text-slate-600 dark:text-slate-300" id="correctAnswerDisplay"></p>
+                                <h3 class="font-bold text-emerald-800 dark:text-emerald-400 text-base">答案與文法解析</h3>
+                                <p class="text-xs sm:text-sm mt-1 text-slate-600 dark:text-slate-300" id="correctAnswerDisplay"></p>
                             </div>
                         </div>
 
-                        <div class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-line pl-9 border-l-2 border-slate-200 dark:border-slate-700" id="explanationText"></div>
+                        <div class="text-slate-700 dark:text-slate-300 text-xs sm:text-sm leading-relaxed whitespace-pre-line pl-9 border-l-2 border-slate-200 dark:border-slate-700" id="explanationText"></div>
 
                         <!-- Core Vocabulary with Instant Notebook Import -->
-                        <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700/50 shadow-sm pl-9">
-                            <h4 class="font-bold text-slate-800 dark:text-white flex items-center space-x-2 mb-3">
+                        <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700/50 shadow-sm pl-9">
+                            <h4 class="font-bold text-slate-800 dark:text-white flex items-center space-x-2 mb-3 text-xs sm:text-sm">
                                 <i class="fa-solid fa-book-bookmark text-brand-500"></i>
-                                <span>核心字彙 (點擊加號快速存入個人字卡庫)</span>
+                                <span>核心字彙 (點擊加號快速存入單字清單)</span>
                             </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm" id="vocabularyContainer"></div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs" id="vocabularyContainer"></div>
                         </div>
 
-                        <div class="pl-9 text-sm text-slate-500 dark:text-slate-400 italic" id="translationDisplay"></div>
+                        <div class="pl-9 text-xs sm:text-sm text-slate-500 dark:text-slate-400 italic" id="translationDisplay"></div>
                     </div>
                 </div>
 
                 <!-- VIEW 2: Wrong Questions Review Area (3-Correct Mastery System) -->
-                <div id="wrongReviewContainer" class="hidden space-y-6 animate-fade-in">
+                <div id="wrongReviewContainer" class="hidden space-y-5 animate-fade-in">
                     
-                    <div class="bg-gradient-to-tr from-slate-900 to-slate-800 text-white p-6 rounded-2xl border border-slate-700 shadow-md">
+                    <div class="bg-gradient-to-tr from-slate-900 to-slate-800 text-white p-5 rounded-2xl border border-slate-700 shadow-md">
                         <div class="flex items-center space-x-3 mb-2">
-                            <span class="p-2 bg-amber-500 text-slate-900 rounded-lg text-sm font-extrabold"><i class="fa-solid fa-bolt"></i> 錯題特訓</span>
-                            <h2 class="text-lg font-bold">文法盲點加強訓練</h2>
+                            <span class="p-1.5 bg-amber-500 text-slate-900 rounded-lg text-xs font-black"><i class="fa-solid fa-bolt"></i> 錯題特訓</span>
+                            <h2 class="text-base font-bold">文法盲點加強訓練</h2>
                         </div>
                         <p class="text-xs text-slate-300 leading-relaxed mb-4">
                             這裡存放了您曾答錯的題目。每道題都需要在接下來的自主複習中**連續或累計答對 3 次**，才能完全從複習名單中移出！如果答錯，該題進度會重新歸零。
@@ -242,41 +251,41 @@
 
                     <div id="wrongReviewMainView" class="space-y-4">
                         <!-- Practice Card -->
-                        <div id="wrongPracticeCard" class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-md hidden">
-                            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700/50 pb-4 mb-5">
+                        <div id="wrongPracticeCard" class="bg-white dark:bg-slate-800 p-5 sm:p-7 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-md hidden">
+                            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700/50 pb-3 mb-4">
                                 <span class="text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2.5 py-1 rounded-md" id="wrongCategoryBadge">
                                     題型
                                 </span>
                                 <div class="flex items-center space-x-2">
-                                    <span class="text-xs text-slate-400 font-bold">解鎖進度：</span>
+                                    <span class="text-[10px] text-slate-400 font-bold">解鎖進度：</span>
                                     <div class="flex space-x-1" id="starContainer"></div>
                                     <span id="progressText" class="text-xs font-black text-brand-600 dark:text-brand-400 ml-1">0/3</span>
                                 </div>
                             </div>
 
-                            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white" id="wrongQuestionText"></h2>
-                            <div class="space-y-3" id="wrongOptionsContainer"></div>
+                            <h2 class="text-base font-bold mb-5 text-slate-800 dark:text-white" id="wrongQuestionText"></h2>
+                            <div class="space-y-2.5" id="wrongOptionsContainer"></div>
 
-                            <div id="wrongActionPanel" class="mt-6 pt-5 border-t border-slate-100 dark:border-slate-700/50 flex flex-col sm:flex-row justify-between items-center gap-3 hidden">
+                            <div id="wrongActionPanel" class="mt-5 pt-4 border-t border-slate-100 dark:border-slate-700/50 flex flex-col sm:flex-row justify-between items-center gap-3 hidden">
                                 <div id="wrongFeedbackText" class="text-sm font-bold"></div>
-                                <button id="nextWrongBtn" class="w-full sm:w-auto px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-bold transition flex items-center justify-center space-x-2 shadow-md">
+                                <button id="nextWrongBtn" class="w-full sm:w-auto px-5 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-bold transition flex items-center justify-center space-x-2 shadow-md min-h-[44px]">
                                     <span>下一張錯題</span>
                                     <i class="fa-solid fa-angles-right"></i>
                                 </button>
                             </div>
 
-                            <div id="wrongExplanationPanel" class="mt-6 bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800 rounded-xl p-5 text-sm hidden">
+                            <div id="wrongExplanationPanel" class="mt-5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800 rounded-xl p-4 text-xs sm:text-sm hidden">
                                 <h4 class="font-extrabold text-slate-800 dark:text-white mb-2"><i class="fa-solid fa-circle-info text-brand-500 mr-1.5"></i>文法精析：</h4>
                                 <p id="wrongExplanationText" class="text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line text-xs mb-3"></p>
-                                <div class="p-3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 rounded-lg" id="wrongSentenceTranslation"></div>
+                                <div class="p-3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 rounded-lg text-xs" id="wrongSentenceTranslation"></div>
                             </div>
                         </div>
 
-                        <div id="wrongEmptyState" class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-10 text-center shadow-sm">
-                            <div class="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
+                        <div id="wrongEmptyState" class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-8 text-center shadow-sm">
+                            <div class="w-14 h-14 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
                                 <i class="fa-solid fa-circle-check"></i>
                             </div>
-                            <h3 class="font-extrabold text-lg text-slate-800 dark:text-white">太棒了！目前沒有錯題</h3>
+                            <h3 class="font-bold text-base text-slate-800 dark:text-white">太棒了！目前沒有錯題</h3>
                             <p class="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-2 leading-relaxed">
                                 答錯的題目將會自動收入至此複習特訓區。您可以點擊上方「核心挑戰測驗」分頁挑戰自我，驗證英文實力！
                             </p>
@@ -286,71 +295,81 @@
 
             </div>
 
-            <!-- Right Column: Dedicated Vocabulary Panel & Flashcard deck -->
-            <div id="vocabSidePanel" class="lg:col-span-5 lg:sticky lg:top-24 hidden lg:block h-[calc(100vh-8rem)] transition-all duration-300">
-                <div id="vocabSidePanelWrapper" class="bg-gradient-to-b from-white to-slate-50/50 dark:from-slate-800 dark:to-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl lg:shadow-sm rounded-2xl p-5 flex flex-col h-full overflow-hidden transition-all duration-300">
+            <!-- Right Column: Dedicated Vocabulary Panel (Optimized Drawer for Mobile) -->
+            <div id="vocabSidePanel" class="lg:col-span-5 lg:sticky lg:top-20 hidden lg:block h-[calc(100vh-6.5rem)] transition-all duration-300">
+                <div id="vocabSidePanelWrapper" class="bg-gradient-to-b from-white to-slate-50/50 dark:from-slate-800 dark:to-slate-900 border border-slate-200/60 dark:border-slate-800 shadow-xl lg:shadow-sm rounded-2xl p-4 flex flex-col h-full overflow-hidden transition-all duration-300 relative">
                     
-                    <!-- Sidebar Header -->
+                    <!-- Sidebar Header with Drag Handle style close button for mobile UX -->
                     <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
-                        <div class="flex items-center space-x-3">
+                        <div class="flex items-center space-x-2.5">
                             <div class="bg-gradient-to-tr from-emerald-500 to-teal-400 text-white p-2.5 rounded-xl shadow-md shadow-emerald-500/20">
                                 <i class="fa-solid fa-layer-group"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-slate-800 dark:text-white">專屬單字練習區</h3>
-                                <p class="text-xs text-slate-400 dark:text-slate-500 font-medium">隨身字詞本與 Anki 雙面背字卡</p>
+                                <h3 class="font-bold text-slate-800 dark:text-white text-sm sm:text-base">單字練習區</h3>
+                                <p class="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">隨身字詞本與 Anki 雙面背字卡</p>
                             </div>
                         </div>
-                        <button id="closeVocabPanel" class="lg:hidden p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition" aria-label="Close Panel">
+                        
+                        <!-- Extra large touch zone close button for Mobile drawers -->
+                        <button id="closeVocabPanel" class="lg:hidden w-10 h-10 flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-full text-slate-500 dark:text-slate-300 transition" aria-label="Close Panel">
                             <i class="fa-solid fa-xmark text-lg"></i>
                         </button>
                     </div>
 
                     <!-- Mode Toggle Menu -->
-                    <div class="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl my-4 shrink-0">
-                        <button id="showListTab" class="flex-1 py-2 text-xs font-semibold rounded-lg transition-all duration-200 bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white">
+                    <div class="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl my-3 shrink-0 h-10">
+                        <button id="showListTab" class="flex-1 text-xs font-bold rounded-lg transition-all duration-200 bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white">
                             <i class="fa-solid fa-list-ul mr-1"></i> 字卡清單
                         </button>
-                        <button id="showReviewTab" class="flex-1 py-2 text-xs font-semibold rounded-lg transition-all duration-200 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-                            <i class="fa-solid fa-bolt mr-1"></i> 🎯 開始字卡複習
+                        <button id="showReviewTab" class="flex-1 text-xs font-bold rounded-lg transition-all duration-200 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                            <i class="fa-solid fa-bolt mr-1"></i> 🎯 今日單字複習
                         </button>
                     </div>
 
                     <!-- VIEW A: List Management Container -->
-                    <div id="viewListContainer" class="flex-1 flex flex-col overflow-hidden space-y-4">
-                        <form id="vocabAddForm" class="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/40 dark:border-slate-700/40 space-y-3 shrink-0">
-                            <span class="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider block flex items-center gap-1.5">
+                    <div id="viewListContainer" class="flex-1 flex flex-col overflow-hidden space-y-3">
+                        <form id="vocabAddForm" class="bg-slate-50 dark:bg-slate-800/40 p-3.5 rounded-xl border border-slate-200/40 dark:border-slate-700/40 space-y-2 shrink-0">
+                            <span class="text-[11px] font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider block flex items-center gap-1.5">
                                 <i class="fa-solid fa-plus"></i> 新增單字
                             </span>
                             <div class="flex gap-2">
                                 <input type="text" id="addWordInput" required placeholder="輸入英文單字 (如 negotiate)" class="flex-1 bg-white dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/20 text-slate-800 dark:text-slate-100" />
-                                <button type="submit" id="smartAddBtn" class="bg-brand-600 hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-600 text-white rounded-lg px-4 py-2 text-xs font-bold transition flex items-center space-x-1.5 shrink-0 shadow-sm">
+                                <button type="submit" id="smartAddBtn" class="bg-brand-600 hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-600 text-white rounded-lg px-4.5 py-2 text-xs font-bold transition flex items-center space-x-1.5 shrink-0 shadow-sm min-h-[36px]">
                                     <i class="fa-solid fa-magnifying-glass"></i>
-                                    <span>智慧查詢</span>
+                                    <span>查詢</span>
                                 </button>
                             </div>
-                            <p class="text-[10px] text-slate-400 dark:text-slate-500 leading-normal">
-                                * 輸入英文單字後，點擊「智慧查詢」將自動翻譯獲取中文、標準音標、例句及真人發音。
-                            </p>
                         </form>
 
                         <div class="flex-1 flex flex-col overflow-hidden">
-                            <div class="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider mb-2 px-1 shrink-0">
-                                <span id="vocabCountText">單字庫 (共 0 個)</span>
-                                <button id="clearAllVocabBtn" class="text-rose-500 hover:text-rose-600 hover:underline transition">清空全部</button>
+                            <!-- Sorters & Actions Block -->
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider mb-2 px-1 shrink-0 gap-2">
+                                <span id="vocabCountText" class="text-[11px]">單字庫 (共 0 個)</span>
+                                <div class="flex items-center gap-1.5 w-full sm:w-auto">
+                                    <!-- Dynamic sorter selection -->
+                                    <select id="vocabSortSelect" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-none rounded-lg px-2 py-1 text-[11px] focus:ring-1 focus:ring-brand-500 outline-none cursor-pointer h-7" aria-label="Sort options">
+                                        <option value="time_desc">最新加入</option>
+                                        <option value="time_asc">最早加入</option>
+                                        <option value="alpha">字母 A-Z</option>
+                                        <option value="mastery_asc">熟練度: 低 ➔ 高</option>
+                                        <option value="mastery_desc">熟練度: 高 ➔ 低</option>
+                                    </select>
+                                    <button id="clearAllVocabBtn" class="text-rose-500 hover:text-rose-600 hover:underline transition text-[11px]">清空</button>
+                                </div>
                             </div>
                             <!-- Scrollable Notebook cards container -->
-                            <div id="notebookListContainer" class="flex-1 overflow-y-auto space-y-3 pr-1 py-1 custom-scrollbar"></div>
+                            <div id="notebookListContainer" class="flex-1 overflow-y-auto space-y-3.5 pr-1 py-1 custom-scrollbar"></div>
                         </div>
                     </div>
 
                     <!-- VIEW B: Flashcard Review Deck Container (Anki Logic) -->
                     <div id="viewReviewContainer" class="hidden flex-1 flex flex-col overflow-hidden">
                         
-                        <div class="mb-3 space-y-2 shrink-0">
+                        <div class="mb-2.5 space-y-2 shrink-0">
                             <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                                 <span class="font-bold flex items-center gap-1.5">
-                                    <i class="fa-solid fa-hourglass-half"></i> 剩餘進度：
+                                    <i class="fa-solid fa-hourglass-half"></i> 剩餘：
                                     <span id="reviewProgressBarText" class="text-brand-600 dark:text-brand-400">0 / 0</span>
                                 </span>
                                 <span class="text-[10px] text-slate-400">點擊卡片以翻面</span>
@@ -358,67 +377,67 @@
                             <div class="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
                                 <div id="reviewProgressBar" class="bg-emerald-500 h-full w-0 transition-all duration-300"></div>
                             </div>
-                            <div class="grid grid-cols-4 gap-1.5 pt-1 text-[10px] text-center font-bold">
-                                <div class="bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 rounded p-1">
+                            <div class="grid grid-cols-4 gap-1 pt-1 text-[9px] text-center font-bold">
+                                <div class="bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 rounded py-0.5 px-1">
                                     Again: <span id="countAgain">0</span>
                                 </div>
-                                <div class="bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 rounded p-1">
+                                <div class="bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 rounded py-0.5 px-1">
                                     Hard: <span id="countHard">0</span>
                                 </div>
-                                <div class="bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 rounded p-1">
+                                <div class="bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 rounded py-0.5 px-1">
                                     Good: <span id="countGood">0</span>
                                 </div>
-                                <div class="bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 rounded p-1">
+                                <div class="bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 rounded py-0.5 px-1">
                                     Easy: <span id="countEasy">0</span>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Anki Card Window Frame -->
-                        <div class="flex-1 flex flex-col justify-center py-4">
-                            <div id="reviewCard" class="perspective-1000 w-full h-[280px] cursor-pointer">
+                        <div class="flex-1 flex flex-col justify-center py-2">
+                            <div id="reviewCard" class="perspective-1000 w-full h-[250px] cursor-pointer">
                                 <div class="flip-card-inner relative w-full h-full duration-500">
                                     
                                     <!-- FRONT OF THE CARD -->
-                                    <div class="backface-hidden absolute inset-0 bg-gradient-to-tr from-brand-50 to-white dark:from-slate-800 dark:to-slate-700/80 rounded-2xl border-2 border-brand-100 dark:border-slate-700 flex flex-col items-center justify-between p-6 shadow-md">
+                                    <div class="backface-hidden absolute inset-0 bg-gradient-to-tr from-brand-50 to-white dark:from-slate-800 dark:to-slate-700/80 rounded-2xl border-2 border-brand-100 dark:border-slate-700 flex flex-col items-center justify-between p-5 shadow-md">
                                         <div class="w-full text-right">
-                                            <span class="text-[10px] uppercase font-bold tracking-widest text-brand-500 bg-brand-50 dark:bg-slate-700 px-2 py-0.5 rounded-full">Front</span>
+                                            <span class="text-[9px] uppercase font-bold tracking-widest text-brand-500 bg-brand-50 dark:bg-slate-700 px-2 py-0.5 rounded-full">Front</span>
                                         </div>
-                                        <div class="text-center space-y-2">
-                                            <h1 id="cardFrontWord" class="text-3xl font-black text-slate-800 dark:text-white tracking-tight">word</h1>
+                                        <div class="text-center space-y-1.5">
+                                            <h1 id="cardFrontWord" class="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white tracking-tight">word</h1>
                                             <div class="flex items-center justify-center space-x-1.5">
                                                 <span id="cardFrontPhonetic" class="text-xs font-mono text-slate-500 dark:text-slate-400">/phonetic/</span>
-                                                <button id="cardFrontSpeakBtn" class="text-brand-500 hover:text-brand-600 p-1.5 rounded-full hover:bg-white dark:hover:bg-slate-600/50 transition">
+                                                <button id="cardFrontSpeakBtn" class="text-brand-500 hover:text-brand-600 p-2 rounded-full hover:bg-white dark:hover:bg-slate-600/50 transition min-w-[36px] min-h-[36px] flex items-center justify-center">
                                                     <i class="fa-solid fa-volume-high text-sm"></i>
                                                 </button>
                                             </div>
                                         </div>
-                                        <div class="text-slate-400 dark:text-slate-500 text-xs font-medium animate-pulse">
+                                        <div class="text-slate-400 dark:text-slate-500 text-[10px] font-medium animate-pulse">
                                             <i class="fa-solid fa-arrows-rotate mr-1"></i> 點擊翻至背面
                                         </div>
                                     </div>
 
                                     <!-- BACK OF THE CARD -->
-                                    <div class="backface-hidden rotate-y-180 absolute inset-0 bg-white dark:bg-slate-800 rounded-2xl border-2 border-slate-100 dark:border-slate-700 flex flex-col justify-between p-6 shadow-lg overflow-y-auto custom-scrollbar">
+                                    <div class="backface-hidden rotate-y-180 absolute inset-0 bg-white dark:bg-slate-800 rounded-2xl border-2 border-slate-100 dark:border-slate-700 flex flex-col justify-between p-5 shadow-lg overflow-y-auto custom-scrollbar">
                                         <div class="flex justify-between items-center shrink-0">
-                                            <span class="text-[10px] uppercase font-bold tracking-widest text-emerald-500 bg-emerald-50 dark:bg-slate-700/50 px-2 py-0.5 rounded-full">Back</span>
+                                            <span class="text-[9px] uppercase font-bold tracking-widest text-emerald-500 bg-emerald-50 dark:bg-slate-700/50 px-2 py-0.5 rounded-full">Back</span>
                                             <span id="cardBackPhonetic" class="text-xs font-mono text-slate-400">/phonetic/</span>
                                         </div>
                                         
                                         <!-- Central Content -->
-                                        <div class="my-auto py-2 text-center space-y-3">
-                                            <h2 id="cardBackWord" class="text-xl font-extrabold text-slate-700 dark:text-slate-200">word</h2>
-                                            <p id="cardBackMeaning" class="text-base font-bold text-brand-600 dark:text-brand-400">中文翻譯</p>
+                                        <div class="my-auto py-1 text-center space-y-2">
+                                            <h2 id="cardBackWord" class="text-lg font-extrabold text-slate-700 dark:text-slate-200">word</h2>
+                                            <p id="cardBackMeaning" class="text-sm font-bold text-brand-600 dark:text-brand-400">中文翻譯</p>
                                             
                                             <!-- Example Sentence Box -->
-                                            <div id="cardBackExampleBox" class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800 text-left relative group">
+                                            <div id="cardBackExampleBox" class="bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 text-left relative">
                                                 <div class="flex items-start justify-between gap-1">
                                                     <div class="flex-1">
-                                                        <span class="text-[9px] uppercase tracking-wider font-bold text-slate-400 block mb-0.5">Example Sentence 例句:</span>
-                                                        <p id="cardBackExample" class="text-xs font-medium text-slate-600 dark:text-slate-300 leading-relaxed">This is an example sentence.</p>
-                                                        <p id="cardBackExampleTranslation" class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">這是例句的中文翻譯。</p>
+                                                        <span class="text-[9px] uppercase tracking-wider font-bold text-slate-400 block mb-0.5">Example:</span>
+                                                        <p id="cardBackExample" class="text-[11px] font-medium text-slate-600 dark:text-slate-300 leading-relaxed">This is an example sentence.</p>
+                                                        <p id="cardBackExampleTranslation" class="text-[10px] text-slate-400 dark:text-slate-500 mt-1">這是例句的中文翻譯。</p>
                                                     </div>
-                                                    <button id="cardBackExampleSpeakBtn" class="text-slate-400 hover:text-brand-500 p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition shrink-0 self-center" title="朗讀整句例句">
+                                                    <button id="cardBackExampleSpeakBtn" class="text-slate-400 hover:text-brand-500 p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition shrink-0 self-center min-w-[36px] min-h-[36px] flex items-center justify-center" title="朗讀整句例句">
                                                         <i class="fa-solid fa-volume-high text-xs"></i>
                                                     </button>
                                                 </div>
@@ -430,38 +449,38 @@
                             </div>
                         </div>
 
-                        <!-- ANKI FEEDBACK BUTTONS -->
-                        <div id="ankiButtonsContainer" class="grid grid-cols-4 gap-2 py-2 border-t border-slate-100 dark:border-slate-800 shrink-0">
-                            <button id="btnAgain" class="flex flex-col items-center justify-center p-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition shadow-sm shadow-rose-500/20">
+                        <!-- ANKI FEEDBACK BUTTONS - Large touch sizes for Mobile -->
+                        <div id="ankiButtonsContainer" class="grid grid-cols-4 gap-1.5 py-2 border-t border-slate-100 dark:border-slate-800 shrink-0">
+                            <button id="btnAgain" class="flex flex-col items-center justify-center p-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition shadow-sm shadow-rose-500/20 min-h-[44px]">
                                 <span class="text-xs font-bold">Again</span>
-                                <span class="text-[9px] opacity-85">插至第2張</span>
+                                <span class="text-[8px] opacity-80">插至第2張</span>
                             </button>
-                            <button id="btnHard" class="flex flex-col items-center justify-center p-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition shadow-sm shadow-amber-500/20">
+                            <button id="btnHard" class="flex flex-col items-center justify-center p-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition shadow-sm shadow-amber-500/20 min-h-[44px]">
                                 <span class="text-xs font-bold">Hard</span>
-                                <span class="text-[9px] opacity-85">排至中間</span>
+                                <span class="text-[8px] opacity-80">排至中間</span>
                             </button>
-                            <button id="btnGood" class="flex flex-col items-center justify-center p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition shadow-sm shadow-blue-500/20">
+                            <button id="btnGood" class="flex flex-col items-center justify-center p-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition shadow-sm shadow-blue-500/20 min-h-[44px]">
                                 <span class="text-xs font-bold">Good</span>
-                                <span class="text-[9px] opacity-85">排至末尾</span>
+                                <span class="text-[8px] opacity-80">排至末尾</span>
                             </button>
-                            <button id="btnEasy" class="flex flex-col items-center justify-center p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition shadow-sm shadow-emerald-500/20">
+                            <button id="btnEasy" class="flex flex-col items-center justify-center p-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition shadow-sm shadow-emerald-500/20 min-h-[44px]">
                                 <span class="text-xs font-bold">Easy</span>
-                                <span class="text-[9px] opacity-85">本次移除</span>
+                                <span class="text-[8px] opacity-80">本次移除</span>
                             </button>
                         </div>
 
                     </div>
 
                     <!-- VIEW C: Flashcards Practice Finished Panel -->
-                    <div id="viewFinishedContainer" class="hidden flex-1 flex flex-col justify-center items-center text-center space-y-6">
-                        <div class="w-16 h-16 bg-gradient-to-tr from-emerald-500 to-teal-400 text-white rounded-full flex items-center justify-center text-2xl shadow-lg shadow-emerald-500/25 animate-bounce">
+                    <div id="viewFinishedContainer" class="hidden flex-1 flex flex-col justify-center items-center text-center space-y-4">
+                        <div class="w-14 h-14 bg-gradient-to-tr from-emerald-500 to-teal-400 text-white rounded-full flex items-center justify-center text-xl shadow-lg shadow-emerald-500/25 animate-bounce">
                             <i class="fa-solid fa-circle-check"></i>
                         </div>
                         <div>
-                            <h3 class="font-black text-xl text-slate-800 dark:text-white">完成練習！</h3>
-                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">您已成功複習完本次全部字卡！</p>
+                            <h3 class="font-black text-lg text-slate-800 dark:text-white">完成練習！</h3>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">您已成功複習完本次全部字卡！</p>
                         </div>
-                        <div class="w-full max-w-xs grid grid-cols-2 gap-2 text-xs bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                        <div class="w-full max-w-xs grid grid-cols-2 gap-1.5 text-xs bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
                             <div class="text-left font-medium text-slate-500">Again 點擊:</div>
                             <div class="text-right font-bold text-rose-500" id="recapAgain">0</div>
                             <div class="text-left font-medium text-slate-500">Hard 點擊:</div>
@@ -471,7 +490,7 @@
                             <div class="text-left font-medium text-slate-500">Easy 點擊:</div>
                             <div class="text-right font-bold text-emerald-500" id="recapEasy">0</div>
                         </div>
-                        <button id="restartAnkiDeckBtn" class="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-md shadow-brand-500/25">
+                        <button id="restartAnkiDeckBtn" class="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 shadow-md shadow-brand-500/25 min-h-[40px]">
                             <i class="fa-solid fa-arrows-rotate"></i>
                             <span>再練習一次</span>
                         </button>
@@ -483,46 +502,92 @@
         </div>
     </main>
 
+    <!-- Supabase Auth Modal -->
+    <div id="authModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-sm w-full p-6 border border-slate-100 dark:border-slate-700/50 shadow-2xl space-y-4">
+            <div class="text-center space-y-1.5">
+                <div class="mx-auto w-12 h-12 bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 rounded-full flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <h3 class="font-black text-base text-slate-800 dark:text-white">登入 / 註冊雲端帳號</h3>
+                <p class="text-xs text-slate-400 dark:text-slate-500">同步您在不同裝置間的測驗進度與字詞本</p>
+            </div>
+
+            <!-- Email Auth Form -->
+            <form id="emailAuthForm" class="space-y-3">
+                <div class="space-y-1">
+                    <label for="authEmail" class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">電子郵件 (Email)</label>
+                    <input type="email" id="authEmail" required placeholder="example@gmail.com" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-700/60 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/20 text-slate-800 dark:text-slate-100" />
+                </div>
+                <div class="space-y-1">
+                    <label for="authPassword" class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">密碼 (Password)</label>
+                    <input type="password" id="authPassword" required placeholder="輸入至少 6 位密碼" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-700/60 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/20 text-slate-800 dark:text-slate-100" />
+                </div>
+                
+                <div class="flex gap-2 pt-1.5">
+                    <button type="submit" id="loginBtn" class="flex-1 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold transition">登入</button>
+                    <button type="button" id="signUpBtn" class="flex-1 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition">註冊新帳號</button>
+                </div>
+            </form>
+
+            <div class="relative flex py-2 items-center">
+                <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+                <span class="flex-shrink mx-3 text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase">或使用第三方帳號</span>
+                <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+            </div>
+
+            <!-- OAuth Options -->
+            <div class="space-y-2">
+                <button id="googleAuthBtn" class="w-full py-2.5 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2">
+                    <i class="fa-brands fa-google text-rose-500"></i>
+                    <span>使用 Google (Gmail) 帳號登入</span>
+                </button>
+            </div>
+
+            <button id="closeAuthModal" class="w-full py-2 text-center text-[11px] text-slate-400 dark:text-slate-500 hover:underline">暫不登入，使用本地模式</button>
+        </div>
+    </div>
+
     <!-- Summary Modal (Triggered upon submitting 20/20 Core questions) -->
     <div id="summaryModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden transition-opacity duration-300">
-        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-8 border border-slate-100 dark:border-slate-700/50 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar text-center space-y-6 transform scale-95 opacity-0 transition-all duration-300" id="summaryCard">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 sm:p-8 border border-slate-100 dark:border-slate-700/50 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar text-center space-y-5 transform scale-95 opacity-0 transition-all duration-300" id="summaryCard">
             
-            <div class="mx-auto w-20 h-20 bg-gradient-to-tr from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white text-3xl shadow-lg shadow-orange-500/20">
+            <div class="mx-auto w-16 h-16 bg-gradient-to-tr from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white text-2xl shadow-lg shadow-orange-500/20">
                 <i class="fa-solid fa-trophy"></i>
             </div>
 
             <div>
-                <h2 class="text-2xl font-black text-slate-800 dark:text-white">完成 Part 5 實戰挑戰！</h2>
-                <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">目標：多益 600 - 700 分</p>
+                <h2 class="text-xl font-black text-slate-800 dark:text-white">完成 Part 5 實戰挑戰！</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">對標：多益 600 - 700 分</p>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50">
-                <div class="text-center p-2">
-                    <span class="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold block">本屆得分</span>
-                    <span class="text-2xl font-extrabold text-brand-600 dark:text-brand-400" id="finalScoreDisplay">0 / 20</span>
+            <div class="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/50">
+                <div class="text-center p-1">
+                    <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold block">本屆得分</span>
+                    <span class="text-xl font-extrabold text-brand-600 dark:text-brand-400" id="finalScoreDisplay">0 / 20</span>
                 </div>
-                <div class="text-center p-2">
-                    <span class="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold block">準確率 (Accuracy)</span>
-                    <span class="text-2xl font-extrabold text-emerald-500" id="accuracyDisplay">0%</span>
+                <div class="text-center p-1">
+                    <span class="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold block">準確率</span>
+                    <span class="text-xl font-extrabold text-emerald-500" id="accuracyDisplay">0%</span>
                 </div>
             </div>
 
-            <div class="text-sm leading-relaxed text-slate-600 dark:text-slate-300" id="summaryFeedbackText"></div>
+            <div class="text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300" id="summaryFeedbackText"></div>
 
-            <div id="wrongQuestionsContainer" class="hidden text-left space-y-3">
+            <div id="wrongQuestionsContainer" class="hidden text-left space-y-2.5">
                 <span class="text-xs font-semibold text-rose-500 uppercase tracking-wider block flex items-center gap-1">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                     <span>已自動匯入「錯題特訓區」的題目</span>
                 </span>
-                <div id="wrongQuestionsList" class="space-y-2 max-h-45 overflow-y-auto custom-scrollbar"></div>
+                <div id="wrongQuestionsList" class="space-y-2 max-h-40 overflow-y-auto custom-scrollbar"></div>
             </div>
 
-            <div class="pt-4 flex flex-col sm:flex-row gap-3">
-                <button id="viewSolutionsBtn" class="flex-1 px-5 py-3 bg-brand-600 hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-600 text-white rounded-xl font-bold text-sm transition shadow-lg shadow-brand-500/20 flex items-center justify-center space-x-2">
+            <div class="pt-2 flex flex-col sm:flex-row gap-2.5">
+                <button id="viewSolutionsBtn" class="flex-1 px-5 py-3 bg-brand-600 hover:bg-brand-700 dark:bg-brand-500 dark:hover:bg-brand-600 text-white rounded-xl font-bold text-sm transition shadow-lg shadow-brand-500/20 flex items-center justify-center space-x-2 min-h-[44px]">
                     <i class="fa-solid fa-circle-info"></i>
                     <span>看本次解析</span>
                 </button>
-                <button id="restartBtn" class="flex-1 px-5 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-sm transition flex items-center justify-center space-x-2">
+                <button id="restartBtn" class="flex-1 px-5 py-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-sm transition flex items-center justify-center space-x-2 min-h-[44px]">
                     <i class="fa-solid fa-rotate-left"></i>
                     <span>重新挑戰測驗</span>
                 </button>
@@ -531,8 +596,23 @@
     </div>
 
     <script>
-        // Standard, high-fidelity 600-700 level TOEIC Part 5 items (40 questions in total)
-        // Acts as the "Open-Source Bank"
+        // ----------------- Supabase 雲端同步設定 -----------------
+        const SUPABASE_URL = "https://ronmrjxcygsktuxmoapc.supabase.co"; 
+        const SUPABASE_ANON_KEY = "sb_publishable_MUWuuv_FU6eYEX-XkYxqow_Te6jjuMZ";
+
+        let supabaseClient = null;
+        let currentUser = null;
+
+        if (SUPABASE_URL && SUPABASE_ANON_KEY && SUPABASE_URL !== "您的專案URL") {
+            try {
+                // 使用 CDN 提供的全域 supabase 物件建立我們的客戶端實例
+                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            } catch (err) {
+                console.error("Supabase 初始化失敗，將降級為本地模式：", err);
+            }
+        }
+
+        // High-fidelity 600-700 level TOEIC Part 5 items (40 questions total)
         const masterQuestionsBank = [
             {
                 id: 1,
@@ -668,7 +748,7 @@
                 correctAnswer: "B",
                 explanation: `空格位於不及物動詞 arrive（到達）後面，用來修飾該動詞，需要填入「副詞」。\n\n(B) promptly（準時地、迅速地）為副詞，最為符合。`,
                 vocabulary: [
-                    { word: "promptly", phonetic: "/ˈprɑːmptli/", meaning: "準時地、迅速地 (adv.)", example: "Please arrive promptly at 9:00 AM so we can start on time.", exampleTranslation: "請於上午 9:00 準時到達，以便我們按時開始。" }
+                    { word: "promptly", phonetic: "/ˈpɑːmptli/", meaning: "準時地、迅速地 (adv.)", example: "Please arrive promptly at 9:00 AM so we can start on time.", exampleTranslation: "請於上午 9:00 準時到達，以便我們按時開始。" }
                 ],
                 translation: "請全體學員於上午 9:00 準時到達，以便工作坊能按時開始。"
             },
@@ -706,7 +786,6 @@
                 ],
                 translation: "我們很樂意為完成線上意見調查的顧客提供九折優惠。"
             },
-            // Expanding pool to 40 questions...
             {
                 id: 11,
                 category: "Word Forms - Nouns",
@@ -734,7 +813,7 @@
                 ],
                 correctAnswer: "C",
                 explanation: `在工程或製藥標準規範中，通常使用不可數名詞來統稱「管材」。\n\n(C) tubing 為不可數名詞，指「管材」的總稱，完全符合業界標準。`,
-                vocabulary: [{ word: "tubing", phonetic: "/ˈtuːbɪŋ/", meaning: "管材、管道系統 (n.)", example: "Flexible silicone tubing is used for fluid transfer.", exampleTranslation: "彈性矽膠管材用於流體輸送。" }],
+                vocabulary: [{ word: "tubing", phonetic: "/ˈtubɪŋ/", meaning: "管材、管道系統 (n.)", example: "Flexible silicone tubing is used for fluid transfer.", exampleTranslation: "彈性矽膠管材用於流體輸送。" }],
                 translation: "修訂後的標準操作程序指定，在驗證過程中的所有液體輸送都必須使用矽膠管材。"
             },
             {
@@ -749,7 +828,7 @@
                 ],
                 correctAnswer: "B",
                 explanation: `句型 "It is + adj. + that..." 表示評價某事，後半段有 strictly followed（嚴格遵循）。\n\n(B) essential（絕對必要的；至關重要的）最符合語氣。`,
-                vocabulary: [{ word: "essential", phonetic: "/ɪˈsenʃl/", meaning: "絕對必要的 (adj.)", example: "It is essential that everyone attends the safety seminar.", exampleTranslation: "每個人都必須參加安全研討會，這是至關重要的。" }],
+                vocabulary: [{ word: "essential", phonetic: "/ɪˈsɛnʃl/", meaning: "絕對必要的 (adj.)", example: "It is essential that everyone attends the safety seminar.", exampleTranslation: "每個人都必須參加安全研討會，這是至關重要的。" }],
                 translation: "在處理新一批細胞培養物時，嚴格遵守所有安全指南是至關重要的。"
             },
             {
@@ -779,7 +858,7 @@
                 ],
                 correctAnswer: "B",
                 explanation: `supporting 作為現在分詞當形容詞用，修飾 documents，形成常見的複合詞組 supporting documents（佐證文件、證明文件）。`,
-                vocabulary: [{ word: "supporting", phonetic: "/səˈpɔːrtɪŋ/", meaning: "支持的、佐證的 (adj.)", example: "Please attach supporting documents to your application.", exampleTranslation: "請在申請書中附上佐證文件。" }],
+                vocabulary: [{ word: "supporting", phonetic: "/səˈpɔrtɪŋ/", meaning: "支持的、佐證的 (adj.)", example: "Please attach supporting documents to your application.", exampleTranslation: "請在申請書中附上佐證文件。" }],
                 translation: "我們目前正在審查高溫蒸汽滅菌過程的佐證文件。"
             },
             {
@@ -794,7 +873,7 @@
                 ],
                 correctAnswer: "A",
                 explanation: `後半句提到「包括直徑和高度」，因此空格需要填入指代測量數據或比例的名詞。\n\n(A) dimensions (尺寸、寬度高度數據) 最為正確。`,
-                vocabulary: [{ word: "dimensions", phonetic: "/daɪˈmenʃnz/", meaning: "尺寸、物理長寬高數據 (n.)", example: "What are the exact dimensions of this desk?", exampleTranslation: "這張辦公桌的確切尺寸是多少？" }],
+                vocabulary: [{ word: "dimensions", phonetic: "/daɪˈmɛnʃnz/", meaning: "尺寸、物理長寬高數據 (n.)", example: "What are the exact dimensions of this desk?", exampleTranslation: "這張辦公桌的確切尺寸是多少？" }],
                 translation: "請確保最終報告中包含高壓滅菌釜腔體的精確尺寸，包括直徑和高度。"
             },
             {
@@ -809,7 +888,7 @@
                 ],
                 correctAnswer: "A",
                 explanation: `本題考慣用句型。 "inform [某人] of [某事]" 意為「告知某人某事」。\n\n(A) inform 符合。`,
-                vocabulary: [{ word: "inform", phonetic: "/ɪnˈfɔːrm/", meaning: "通知、告知 (v.)", example: "We will inform you of our final decision by email.", exampleTranslation: "我們將通過電子郵件通知您我們的最終決定。" }],
+                vocabulary: [{ word: "inform", phonetic: "/ɪnˈfɔrm/", meaning: "通知、告知 (v.)", example: "We will inform you of our final decision by email.", exampleTranslation: "我們將通過電子郵件通知您我們的最終決定。" }],
                 translation: "王先生將向主管回報原廠拒絕直接銷售該設備的消息。"
             },
             {
@@ -824,7 +903,7 @@
                 ],
                 correctAnswer: "D",
                 explanation: `空格位於冠詞 the 與形容詞 positive 之後，必須填入一個「名詞」來作受詞。\n\n(D) response（反應、回響）是名詞。`,
-                vocabulary: [{ word: "response", phonetic: "/rɪˈspɑːns/", meaning: "反應、回覆 (n.)", example: "The product launch received a positive response from users.", exampleTranslation: "產品發布得到了使用者的正面回響。" }],
+                vocabulary: [{ word: "response", phonetic: "/rɪˈspɑns/", meaning: "反應、回覆 (n.)", example: "The product launch received a positive response from users.", exampleTranslation: "產品發布得到了使用者的正面回響。" }],
                 translation: "行銷團隊對新的虛擬網紅宣傳活動所獲得的正面反應感到驚訝。"
             },
             {
@@ -839,7 +918,7 @@
                 ],
                 correctAnswer: "C",
                 explanation: `空格處修飾動詞 uploads。與主詞 automated (自動化的) 相呼應。\n\n(C) automatically (自動地) 是最合理的副詞。`,
-                vocabulary: [{ word: "automatically", phonetic: "/ˌɔːtəˈmætɪkli/", meaning: "自動地 (adv.)", example: "The system automatically saves your progress every ten seconds.", exampleTranslation: "系統每隔十秒會自動儲存您的進度。" }],
+                vocabulary: [{ word: "automatically", phonetic: "/ˌɔtəˈmætɪkli/", meaning: "自動地 (adv.)", example: "The system automatically saves your progress every ten seconds.", exampleTranslation: "系統每隔十秒會自動儲存您的進度。" }],
                 translation: "自動化內容生成軟體每天早晨都會自動上傳新的白噪音影片到頻道。"
             },
             {
@@ -854,7 +933,7 @@
                 ],
                 correctAnswer: "B",
                 explanation: `空格表示更新確效範圍的基礎或依據。\n\n(B) according to（根據、依照）最符合。`,
-                vocabulary: [{ word: "according to", phonetic: "/əˈkɔːrdɪŋ tuː/", meaning: "根據、依照 (prep.)", example: "According to the contract, the work must be completed by Friday.", exampleTranslation: "根據合約，這項工作必須在週五前完成。" }],
+                vocabulary: [{ word: "according to", phonetic: "/əˈkɔrdɪŋ tu/", meaning: "根據、依照 (prep.)", example: "According to the contract, the work must be completed by Friday.", exampleTranslation: "根據合約，這項工作必須在週五前完成。" }],
                 translation: "工程團隊必須根據稽核人員提供的最新報告來更新重新驗證的範圍。"
             },
             {
@@ -884,7 +963,7 @@
                 ],
                 correctAnswer: "A",
                 explanation: `空格後接的是名詞片語 (the heavy snowstorm)，因此需要「介系詞（片語）」來表達因果關係。\n\n(A) Due to (+ N) 意為「因為」，符合文意。`,
-                vocabulary: [{ word: "due to", phonetic: "/duː tuː/", meaning: "因為、由於 (prep.)", example: "The game was canceled due to rain.", exampleTranslation: "比賽因雨取消。" }],
+                vocabulary: [{ word: "due to", phonetic: "/du tu/", meaning: "因為、由於 (prep.)", example: "The game was canceled due to rain.", exampleTranslation: "比賽因雨取消。" }],
                 translation: "由於嚴重的暴風雪，所有自第二航廈起飛的航班皆已延誤。"
             },
             {
@@ -899,7 +978,7 @@
                 ],
                 correctAnswer: "B",
                 explanation: `空格用以修飾動詞 grown (成長)。\n\n(B) steadily (穩定地) 表示營收健康持續地上升。`,
-                vocabulary: [{ word: "steadily", phonetic: "/ˈstedəli/", meaning: "穩定地、步步地 (adv.)", example: "The prices of our shares have been rising steadily.", exampleTranslation: "我們的股票價格一直在穩步上漲。" }],
+                vocabulary: [{ word: "steadily", phonetic: "/ˈstɛdɪli/", meaning: "穩定地、步步地 (adv.)", example: "The prices of our shares have been rising steadily.", exampleTranslation: "我們的股票價格一直在穩步上漲。" }],
                 translation: "公司的營業收入在過去三年中穩步增長，從而實現了國際擴張。"
             },
             {
@@ -914,7 +993,7 @@
                 ],
                 correctAnswer: "C",
                 explanation: `空格位於受詞 the safety manual 之後，用以修飾主要動詞 read (讀)，需要一個「副詞」。\n\n(C) carefully 為副詞。`,
-                vocabulary: [{ word: "carefully", phonetic: "/ˈkerfəli/", meaning: "仔細地、謹慎地 (adv.)", example: "Please read the instructions carefully before starting.", exampleTranslation: "開始前請仔細閱讀說明書。" }],
+                vocabulary: [{ word: "carefully", phonetic: "/ˈkɛrfəli/", meaning: "仔細地、謹慎地 (adv.)", example: "Please read the instructions carefully before starting.", exampleTranslation: "開始前請仔細閱讀說明書。" }],
                 translation: "員工在操作新機器之前必須仔細閱讀安全手冊。"
             },
             {
@@ -929,7 +1008,7 @@
                 ],
                 correctAnswer: "A",
                 explanation: `"grant someone access to [地點]" 為常見商務搭配，意為「准許某人進入某處」。`,
-                vocabulary: [{ word: "access", phonetic: "/ˈækses/", meaning: "進入權、存取權 (n.)", example: "Only authorized personnel have access to the laboratory.", exampleTranslation: "只有授權人員才能進入實驗室。" }],
+                vocabulary: [{ word: "access", phonetic: "/ˈæksɛs/", meaning: "進入權、存取權 (n.)", example: "Only authorized personnel have access to the laboratory.", exampleTranslation: "只有授權人員才能進入室。" }],
                 translation: "請隨時佩戴您的身份識別證，以便保全人員允許您進入大樓。"
             },
             {
@@ -958,7 +1037,7 @@
                     { key: "D", text: "passive" }
                 ],
                 correctAnswer: "B",
-                explanation: `"prime commercial district" 指「黃金商業地段 / 精華商業區」。\n\n(B) prime 意為「首要的、最好的、精華的」。`,
+                explanation: `"prime commercial district" 指「黃金商業地段 / 精華商業區」。\n\n(B) prime 意為「精華的、首要的」。`,
                 vocabulary: [{ word: "prime", phonetic: "/praɪm/", meaning: "精華的、首要的 (adj.)", example: "The hotel is in a prime location near the beach.", exampleTranslation: "這家飯店位於海灘附近的黃金地段。" }],
                 translation: "新的辦公大樓座落於黃金商業區，搭乘大眾運輸工具非常便利。"
             },
@@ -1034,7 +1113,7 @@
                 ],
                 correctAnswer: "B",
                 explanation: `空格後為名詞片語 (the high demand...)，且前後子句呈因果關係。\n\n(B) Owing to (由於、因為) 為介系詞片語，符合。`,
-                vocabulary: [{ word: "seminar", phonetic: "/ˈsemɪnɑːr/", meaning: "研討會 (n.)", example: "I attended a seminar on digital marketing last week.", exampleTranslation: "我上週參加了一個關於數位行銷的研討會。" }],
+                vocabulary: [{ word: "seminar", phonetic: "/ˈsɛmɪnɑr/", meaning: "研討會 (n.)", example: "I attended a seminar on digital marketing last week.", exampleTranslation: "我上週參加了一個關於數位行銷的研討會。" }],
                 translation: "由於門票需求旺盛，主辦單位在週末研討會中增加了兩個額外場次。"
             },
             {
@@ -1064,7 +1143,7 @@
                 ],
                 correctAnswer: "A",
                 explanation: `"secure a contract" (簽下/爭取到合約) 為商務英語常用詞語。 lucative contract 意為「有利可圖、獲利豐厚的合約」。`,
-                vocabulary: [{ word: "lucrative", phonetic: "/ˈluːkrətɪv/", meaning: "有利可圖的、獲利豐厚的 (adj.)", example: "The merger turned out to be a highly lucrative deal.", exampleTranslation: "事實證明，這次合併是一筆利潤極高的交易。" }],
+                vocabulary: [{ word: "lucrative", phonetic: "/ˈlukrətɪv/", meaning: "有利可圖的、獲利豐厚的 (adj.)", example: "The merger turned out to be a highly lucrative deal.", exampleTranslation: "事實證明，這次合併是一筆利潤極高的交易。" }],
                 translation: "董事會高興地宣佈，我們公司已與一家主要連鎖零售商簽署了一份獲利豐厚的合約。"
             },
             {
@@ -1079,7 +1158,7 @@
                 ],
                 correctAnswer: "C",
                 explanation: `空格位於 complaints 之後，修飾動詞 handles（處理方式），需要副詞。\n\n(C) promptly (迅速地、即刻地) 呼應「24小時內解決」。`,
-                vocabulary: [{ word: "promptly", phonetic: "/ˈprɑːmptli/", meaning: "迅速地、準時地 (adv.)", example: "All inquiries are handled promptly by our support team.", exampleTranslation: "所有諮詢均由我們的支援團隊迅速處理。" }],
+                vocabulary: [{ word: "promptly", phonetic: "/ˈpɑmptli/", meaning: "迅速地、準時地 (adv.)", example: "All inquiries are handled promptly by our support team.", exampleTranslation: "所有諮詢均由我們的支援團隊迅速處理。" }],
                 translation: "客戶關係團隊迅速處理投訴，確保所有問題在 24 小時內得到解決。"
             },
             {
@@ -1094,7 +1173,7 @@
                 ],
                 correctAnswer: "D",
                 explanation: `在及物動詞 receive 之後，需要一個名詞來充當受詞。\n\n(D) authorization (授權、批准) 為名詞。`,
-                vocabulary: [{ word: "authorization", phonetic: "/ˌɔːθəraɪˈzeɪʃn/", meaning: "授權、批准、認可 (n.)", example: "Do you have authorization to access these files?", exampleTranslation: "您有權存取這些檔案嗎？" }],
+                vocabulary: [{ word: "authorization", phonetic: "/ˌɔθəraɪˈzeɪʃn/", meaning: "授權、批准、認可 (n.)", example: "Do you have authorization to access these files?", exampleTranslation: "您有權存取這些檔案嗎？" }],
                 translation: "所有臨時員工必須向人力資源部登記，以獲得進入公司資料庫的授權。"
             },
             {
@@ -1109,7 +1188,7 @@
                 ],
                 correctAnswer: "A",
                 explanation: `轉折連詞 though 提示超支金額極小。\n\n(A) nominal (微不足道的、名義上的) 最符合句意，"nominal amount" 意指「極微小的金額」。`,
-                vocabulary: [{ word: "nominal", phonetic: "/ˈnɑːmɪnl/", meaning: "微不足道的、名義上的 (adj.)", example: "There is a nominal fee of five dollars for using the gym.", exampleTranslation: "使用健身房僅需支付五美元的微薄費用。" }],
+                vocabulary: [{ word: "nominal", phonetic: "/ˈnɑmɪnl/", meaning: "微不足道的、名義上的 (adj.)", example: "There is a nominal fee of five dollars for using the gym.", exampleTranslation: "使用健身房僅需支付五美元的微薄費用。" }],
                 translation: "預算報告指出該部門超出了支出限額，但超出金額微乎其微。"
             },
             {
@@ -1124,7 +1203,7 @@
                 ],
                 correctAnswer: "A",
                 explanation: `空格後接動名詞 signing it。\n\n(A) prior to (在...之前) 為複合介系詞，語意最合理（在簽署合約前應徹底審查條款）。`,
-                vocabulary: [{ word: "prior to", phonetic: "/ˈpraɪər tuː/", meaning: "在...之前 (prep.)", example: "All passengers must clear security prior to boarding.", exampleTranslation: "所有乘客在登機前都必須通過安全檢查。" }],
+                vocabulary: [{ word: "prior to", phonetic: "/ˈpraɪər tu/", meaning: "在...之前 (prep.)", example: "All passengers must clear security prior to boarding.", exampleTranslation: "所有乘客在登機前都必須通過安全檢查。" }],
                 translation: "法律部門建議我們在簽署合約之前徹底審查各項條款。"
             },
             {
@@ -1139,7 +1218,7 @@
                 ],
                 correctAnswer: "A",
                 explanation: `空格後面接的是代表一段特定期間的名詞 "the winter months"。\n\n(A) during (在...期間) 最適合。`,
-                vocabulary: [{ word: "suspend", phonetic: "/səˈspend/", meaning: "暫停、中止 (v.)", example: "The ferry service was suspended due to the heavy fog.", exampleTranslation: "渡輪服務因大霧而暫停。" }],
+                vocabulary: [{ word: "suspend", phonetic: "/səˈspɛnd/", meaning: "暫停、中止 (v.)", example: "The ferry service was suspended due to the heavy fog.", exampleTranslation: "渡輪服務因大霧而暫停。" }],
                 translation: "由於溫度降至零下，新研發設施的建設將在冬季幾個月內暫停。"
             },
             {
@@ -1163,39 +1242,45 @@
         let currentIndex = 0;
         let answersState = Array(20).fill(null);
         let currentTab = 'quiz'; // 'quiz' or 'wrong_review'
-        let quizPhase = 'practice'; // 'practice' (forward-only, no review, choices selectable) or 'solution' (nav enabled, review shown)
+        let quizPhase = 'practice'; // 'practice' or 'solution'
 
         // 3-Correct Mastery System wrong questions list
-        let wrongQuestionsReview = JSON.parse(localStorage.getItem('toeic_wrong_review_v2')) || [];
+        let wrongQuestionsReview = [];
         let currentReviewIndex = 0;
         let hasAnsweredCurrentReview = false;
 
-        // Default Vocabs
+        // Default Vocabulary List with mastery & timestamps
         const defaultNotebook = [
             { 
                 word: "budget", 
                 meaning: "[n.] 預算、經費", 
                 phonetic: "/ˈbʌdʒɪt/", 
                 example: "The marketing director approved our budget proposal for the next fiscal year.",
-                exampleTranslation: "行銷總監批准了我們下一個財政年度的預算提案。"
+                exampleTranslation: "行銷總監批准了我們下一個財政年度的預算提案。",
+                addedAt: Date.now() - 3000,
+                mastery: 3
             },
             { 
                 word: "outstanding", 
                 meaning: "[adj.] 傑出的、未償付的", 
                 phonetic: "/aʊtˈstændɪŋ/", 
                 example: "Her outstanding leadership style motivated the entire department.",
-                exampleTranslation: "她傑出的領導風格激勵了整個部門。"
+                exampleTranslation: "她傑出的領導風格激勵了整個部門。",
+                addedAt: Date.now() - 2000,
+                mastery: 3
             },
             { 
                 word: "negotiate", 
                 meaning: "[v.] 協商、談判", 
                 phonetic: "/nɪˈɡoʊʃieɪt/", 
                 example: "We managed to negotiate a highly favorable agreement with our key distributor.",
-                exampleTranslation: "我們設法與我們的主要分銷商協商達成了一份非常有利的合約。"
+                exampleTranslation: "我們設法與我們的主要分銷商協商達成了一份非常有利的合約。",
+                addedAt: Date.now() - 1000,
+                mastery: 3
             }
         ];
         
-        let customNotebook = JSON.parse(localStorage.getItem('toeic_custom_notebook')) || defaultNotebook;
+        let customNotebook = [];
 
         // Flashcards study queue variables
         let reviewQueue = [];
@@ -1245,7 +1330,7 @@
         const wrongExplanationText = document.getElementById('wrongExplanationText');
         const wrongSentenceTranslation = document.getElementById('wrongSentenceTranslation');
 
-        // Vocabulary Side Panel
+        // Vocabulary Side Panel (Optimized responsive overlay trigger)
         const mobileVocabToggle = document.getElementById('mobileVocabToggle');
         const vocabSidePanel = document.getElementById('vocabSidePanel');
         const vocabSidePanelWrapper = document.getElementById('vocabSidePanelWrapper');
@@ -1257,6 +1342,7 @@
         const vocabCountText = document.getElementById('vocabCountText');
         const clearAllVocabBtn = document.getElementById('clearAllVocabBtn');
         const vocabUpdateBadge = document.getElementById('vocabUpdateBadge');
+        const vocabSortSelect = document.getElementById('vocabSortSelect');
 
         // Flashcards Sidebar views
         const showListTab = document.getElementById('showListTab');
@@ -1307,6 +1393,20 @@
         const restartBtn = document.getElementById('restartBtn');
         const viewSolutionsBtn = document.getElementById('viewSolutionsBtn');
 
+        // Supabase Auth DOM Elements
+        const cloudAuthBtn = document.getElementById('cloudAuthBtn');
+        const cloudStatusIcon = document.getElementById('cloudStatusIcon');
+        const cloudUserText = document.getElementById('cloudUserText');
+        const loginLabelBtn = document.getElementById('loginLabelBtn');
+        const authModal = document.getElementById('authModal');
+        const emailAuthForm = document.getElementById('emailAuthForm');
+        const authEmail = document.getElementById('authEmail');
+        const authPassword = document.getElementById('authPassword');
+        const loginBtn = document.getElementById('loginBtn');
+        const signUpBtn = document.getElementById('signUpBtn');
+        const googleAuthBtn = document.getElementById('googleAuthBtn');
+        const closeAuthModal = document.getElementById('closeAuthModal');
+
         // Configure Theme settings
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
@@ -1324,19 +1424,164 @@
             }
         });
 
+        // ----------------- Supabase 雲端資料流整合 -----------------
+        async function fetchCloudData() {
+            if (!supabaseClient || !currentUser) return;
+            try {
+                const { data, error } = await supabaseClient
+                    .from('toeic_user_progress')
+                    .select('notebook, wrong_review')
+                    .eq('user_id', currentUser.id)
+                    .single();
+
+                if (error && error.code !== 'PGRST116') throw error;
+
+                if (data) {
+                    if (data.notebook) customNotebook = data.notebook;
+                    if (data.wrong_review) wrongQuestionsReview = data.wrong_review;
+                } else {
+                    // 初始化雲端資料庫
+                    customNotebook = JSON.parse(localStorage.getItem('toeic_custom_notebook')) || defaultNotebook;
+                    wrongQuestionsReview = JSON.parse(localStorage.getItem('toeic_wrong_review_v2')) || [];
+                    await saveCloudData();
+                }
+                
+                localStorage.setItem('toeic_custom_notebook', JSON.stringify(customNotebook));
+                localStorage.setItem('toeic_wrong_review_v2', JSON.stringify(wrongQuestionsReview));
+                
+                renderNotebookList();
+                updateWrongCountBadge();
+            } catch (err) {
+                console.error("雲端載入失敗：", err);
+                showToast("載入雲端同步失敗，暫用本地資料。");
+            }
+        }
+
+        async function saveCloudData() {
+            if (!supabaseClient || !currentUser) {
+                // 本地儲存備份
+                localStorage.setItem('toeic_custom_notebook', JSON.stringify(customNotebook));
+                localStorage.setItem('toeic_wrong_review_v2', JSON.stringify(wrongQuestionsReview));
+                return;
+            }
+            try {
+                const { error } = await supabaseClient
+                    .from('toeic_user_progress')
+                    .upsert({
+                        user_id: currentUser.id,
+                        notebook: customNotebook,
+                        wrong_review: wrongQuestionsReview,
+                        updated_at: new Date()
+                    }, { onConflict: 'user_id' });
+
+                if (error) throw error;
+            } catch (err) {
+                console.error("雲端同步保存失敗：", err);
+                showToast("雲端同步儲存失敗，已保存至本地瀏覽器。");
+            }
+        }
+
+        // 初始化使用者驗證監聽
+        if (supabaseClient) {
+            supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                if (session && session.user) {
+                    currentUser = session.user;
+                    cloudStatusIcon.className = "fa-solid fa-cloud-arrow-up text-emerald-500 animate-pulse";
+                    cloudUserText.textContent = currentUser.email;
+                    loginLabelBtn.textContent = "登出";
+                    
+                    // 合併首次登入的本地與雲端數據
+                    await fetchCloudData();
+                    showToast(`☁️ 已成功與雲端安全同步！`);
+                } else {
+                    currentUser = null;
+                    cloudStatusIcon.className = "fa-solid fa-cloud text-slate-400";
+                    cloudUserText.textContent = "本地模式";
+                    loginLabelBtn.textContent = "登入雲端";
+                    
+                    customNotebook = JSON.parse(localStorage.getItem('toeic_custom_notebook')) || defaultNotebook;
+                    wrongQuestionsReview = JSON.parse(localStorage.getItem('toeic_wrong_review_v2')) || [];
+                    
+                    renderNotebookList();
+                    updateWrongCountBadge();
+                }
+            });
+        }
+
+        // Auth Buttons Click events
+        cloudAuthBtn.addEventListener('click', async () => {
+            if (currentUser) {
+                if (confirm("您確定要登出目前雲端帳號嗎？數據將保留在雲端與此瀏覽器中。")) {
+                    await supabaseClient.auth.signOut();
+                    showToast("已成功安全登出！");
+                }
+            } else {
+                if (!supabaseClient) {
+                    showToast("尚未設定 Supabase URL 與 Anon Key！請先參考發布設定指南。");
+                    return;
+                }
+                authModal.classList.remove('hidden');
+            }
+        });
+
+        closeAuthModal.addEventListener('click', () => {
+            authModal.classList.add('hidden');
+        });
+
+        // Email Sign-in / Sign-up
+        emailAuthForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = authEmail.value.trim();
+            const password = authPassword.value;
+
+            // Trigger submit event from loginBtn vs signUpBtn target focus
+            const action = e.submitter === signUpBtn ? 'signup' : 'login';
+
+            if (action === 'signup') {
+                const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                if (error) {
+                    showToast(`註冊失敗: ${error.message}`);
+                } else {
+                    showToast("註冊成功！若有啟用信箱驗證，請至您的信箱收取驗證信，或直接嘗試登入。");
+                }
+            } else {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) {
+                    showToast(`登入失敗: ${error.message}`);
+                } else {
+                    authModal.classList.add('hidden');
+                }
+            }
+        });
+
+        signUpBtn.addEventListener('click', () => {
+            // signUpBtn has type="button" to prevent auto trigger loginBtn submit
+            emailAuthForm.dispatchEvent(new SubmitEvent('submit', { submitter: signUpBtn }));
+        });
+
+        // Google OAuth Sign-In
+        googleAuthBtn.addEventListener('click', async () => {
+            if (!supabaseClient) return;
+            const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.href
+                }
+            });
+            if (error) {
+                showToast(`Google 登入重定向失敗: ${error.message}`);
+            }
+        });
+
         // Shuffler: Draw 20 random items from the master bank
         function drawRandom20Questions() {
-            // Copy master pool
             const shuffledPool = [...masterQuestionsBank];
-            // Fisher-Yates shuffle
             for (let i = shuffledPool.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [shuffledPool[i], shuffledPool[j]] = [shuffledPool[j], shuffledPool[i]];
             }
-            // Keep exactly 20 items
             questions = shuffledPool.slice(0, 20);
             
-            // Re-initialize state
             currentIndex = 0;
             answersState = Array(20).fill(null);
             quizPhase = 'practice';
@@ -1344,7 +1589,7 @@
             updateScoreText();
             initNavigation();
             renderQuestion();
-            showToast("🎯 題庫已刷新！已為您隨機抽選 20 題全新測驗。");
+            showToast("🎯 已為您隨機抽選 20 題全新測驗！");
         }
 
         refreshQuestionsBtn.addEventListener('click', () => {
@@ -1357,7 +1602,7 @@
             drawRandom20Questions();
         });
 
-        // Toggle mobile responsive sidebar safely
+        // Mobile drawer overlay systems
         function toggleMobileVocab(forceClose = false) {
             const isMobile = window.innerWidth < 1024;
             if (!isMobile) return;
@@ -1365,11 +1610,11 @@
             const isOpen = vocabSidePanel.classList.contains('fixed');
             
             if (isOpen || forceClose) {
-                vocabSidePanel.className = "lg:col-span-5 lg:sticky lg:top-24 hidden lg:block h-[calc(100vh-8rem)] transition-all duration-300";
-                vocabSidePanelWrapper.className = "bg-gradient-to-b from-white to-slate-50/50 dark:from-slate-800 dark:to-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl lg:shadow-sm rounded-2xl p-5 flex flex-col h-full overflow-hidden transition-all duration-300";
+                vocabSidePanel.className = "lg:col-span-5 lg:sticky lg:top-20 hidden lg:block h-[calc(100vh-6.5rem)] transition-all duration-300";
+                vocabSidePanelWrapper.className = "bg-gradient-to-b from-white to-slate-50/50 dark:from-slate-800 dark:to-slate-900 border border-slate-200/60 dark:border-slate-800 shadow-xl lg:shadow-sm rounded-2xl p-4 flex flex-col h-full overflow-hidden transition-all duration-300";
             } else {
                 vocabSidePanel.className = "fixed inset-0 z-50 flex justify-end bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in";
-                vocabSidePanelWrapper.className = "w-full max-w-md bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-2xl rounded-2xl p-5 flex flex-col h-full overflow-hidden animate-slide-in";
+                vocabSidePanelWrapper.className = "w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl p-4 flex flex-col h-full overflow-hidden animate-slide-in";
                 vocabUpdateBadge.classList.add('hidden');
             }
         }
@@ -1385,8 +1630,8 @@
 
         window.addEventListener('resize', () => {
             if (window.innerWidth >= 1024) {
-                vocabSidePanel.className = "lg:col-span-5 lg:sticky lg:top-24 block h-[calc(100vh-8rem)]";
-                vocabSidePanelWrapper.className = "bg-gradient-to-b from-white to-slate-50/50 dark:from-slate-800 dark:to-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm rounded-2xl p-5 flex flex-col h-full overflow-hidden transition-all duration-300";
+                vocabSidePanel.className = "lg:col-span-5 lg:sticky lg:top-20 block h-[calc(100vh-6.5rem)]";
+                vocabSidePanelWrapper.className = "bg-gradient-to-b from-white to-slate-50/50 dark:from-slate-800 dark:to-slate-900 border border-slate-200/60 dark:border-slate-800 shadow-sm rounded-2xl p-4 flex flex-col h-full overflow-hidden transition-all duration-300";
             } else {
                 if (!vocabSidePanel.classList.contains('fixed')) {
                     vocabSidePanel.classList.add('hidden');
@@ -1394,7 +1639,7 @@
             }
         });
 
-        // Main View tab switches
+        // Tab Switches
         mainQuizTabBtn.addEventListener('click', () => {
             switchMainTab('quiz');
         });
@@ -1406,15 +1651,15 @@
         function switchMainTab(tab) {
             currentTab = tab;
             if (tab === 'quiz') {
-                mainQuizTabBtn.className = "flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 bg-brand-600 text-white shadow-md shadow-brand-500/10 flex items-center justify-center gap-2";
-                wrongReviewTabBtn.className = "flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center justify-center gap-2 relative";
+                mainQuizTabBtn.className = "flex-1 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 bg-brand-600 text-white shadow-md shadow-brand-500/10 flex items-center justify-center gap-1.5 h-full";
+                wrongReviewTabBtn.className = "flex-1 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center justify-center gap-1.5 relative h-full";
                 
                 coreQuizContainer.classList.remove('hidden');
                 wrongReviewContainer.classList.add('hidden');
                 renderQuestion();
             } else {
-                wrongReviewTabBtn.className = "flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 bg-brand-600 text-white shadow-md shadow-brand-500/10 flex items-center justify-center gap-2 relative";
-                mainQuizTabBtn.className = "flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center justify-center gap-2";
+                wrongReviewTabBtn.className = "flex-1 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 bg-brand-600 text-white shadow-md shadow-brand-500/10 flex items-center justify-center gap-1.5 h-full relative";
+                mainQuizTabBtn.className = "flex-1 text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 flex items-center justify-center gap-1.5 h-full";
                 
                 coreQuizContainer.classList.add('hidden');
                 wrongReviewContainer.classList.remove('hidden');
@@ -1422,14 +1667,13 @@
             }
         }
 
-        // Initialize quiz navigation indicators
+        // Initialize progress dot map
         function initNavigation() {
             navDotsContainer.innerHTML = '';
             for (let i = 0; i < questions.length; i++) {
                 const dot = document.createElement('button');
-                dot.className = `w-6 h-6 rounded-lg text-[10px] font-bold transition-all duration-300 flex items-center justify-center border ${i === currentIndex ? 'bg-brand-600 border-brand-600 text-white scale-110' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500'}`;
+                dot.className = `w-full sm:w-7 h-7 sm:h-7 rounded-lg text-[10px] sm:text-xs font-bold transition-all duration-300 flex items-center justify-center border min-h-[28px] ${i === currentIndex ? 'bg-brand-600 border-brand-600 text-white scale-105' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500'}`;
                 
-                // Clicking dots is ONLY allowed during review phase, enforcing forward-only "落子無悔" during active test
                 if (quizPhase === 'solution') {
                     dot.addEventListener('click', () => {
                         currentIndex = i;
@@ -1452,24 +1696,23 @@
             const percentage = ((currentIndex + 1) / questions.length) * 100;
             progressBar.style.width = `${percentage}%`;
 
-            // Setup dots
             Array.from(navDotsContainer.children).forEach((dot, idx) => {
                 dot.textContent = idx + 1;
                 if (idx === currentIndex) {
-                    dot.className = "w-6 h-6 rounded-lg text-[10px] font-bold transition-all duration-300 flex items-center justify-center border bg-brand-600 border-brand-600 text-white scale-110";
+                    dot.className = "w-full sm:w-7 h-7 sm:h-7 rounded-lg text-[10px] sm:text-xs font-bold transition-all duration-300 flex items-center justify-center border bg-brand-600 border-brand-600 text-white scale-105 min-h-[28px]";
                 } else {
                     const ansState = answersState[idx];
                     if (quizPhase === 'solution') {
                         if (ansState && ansState.isCorrect) {
-                            dot.className = "w-6 h-6 rounded-lg text-[10px] font-bold transition-all duration-300 flex items-center justify-center border bg-emerald-100 border-emerald-300 text-emerald-700 dark:bg-emerald-950/40 dark:border-emerald-900/40 dark:text-emerald-400";
+                            dot.className = "w-full sm:w-7 h-7 sm:h-7 rounded-lg text-[10px] sm:text-xs font-bold transition-all duration-300 flex items-center justify-center border bg-emerald-100 border-emerald-300 text-emerald-700 dark:bg-emerald-950/40 dark:border-emerald-900/40 dark:text-emerald-400 min-h-[28px]";
                         } else {
-                            dot.className = "w-6 h-6 rounded-lg text-[10px] font-bold transition-all duration-300 flex items-center justify-center border bg-rose-100 border-rose-300 text-rose-700 dark:bg-rose-950/40 dark:border-rose-900/40 dark:text-rose-400";
+                            dot.className = "w-full sm:w-7 h-7 sm:h-7 rounded-lg text-[10px] sm:text-xs font-bold transition-all duration-300 flex items-center justify-center border bg-rose-100 border-rose-300 text-rose-700 dark:bg-rose-950/40 dark:border-rose-900/40 dark:text-rose-400 min-h-[28px]";
                         }
                     } else {
                         if (ansState !== null) {
-                            dot.className = "w-6 h-6 rounded-lg text-[10px] font-bold transition-all duration-300 flex items-center justify-center border bg-brand-50 border-brand-200 text-brand-600 dark:bg-slate-800 dark:border-brand-900/50 dark:text-brand-400";
+                            dot.className = "w-full sm:w-7 h-7 sm:h-7 rounded-lg text-[10px] sm:text-xs font-bold transition-all duration-300 flex items-center justify-center border bg-brand-50 border-brand-200 text-brand-600 dark:bg-slate-800 dark:border-brand-900/50 dark:text-brand-400 min-h-[28px]";
                         } else {
-                            dot.className = "w-6 h-6 rounded-lg text-[10px] font-bold transition-all duration-300 flex items-center justify-center border bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500";
+                            dot.className = "w-full sm:w-7 h-7 sm:h-7 rounded-lg text-[10px] sm:text-xs font-bold transition-all duration-300 flex items-center justify-center border bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 min-h-[28px]";
                         }
                     }
                 }
@@ -1483,9 +1726,8 @@
 
             q.options.forEach(opt => {
                 const btn = document.createElement('button');
-                btn.className = "w-full text-left p-4 rounded-xl border flex items-center justify-between transition group focus:outline-none focus:ring-2 focus:ring-brand-500/20";
+                btn.className = "w-full text-left p-4 sm:p-5 rounded-xl border flex items-center justify-between transition group focus:outline-none focus:ring-2 focus:ring-brand-500/20 min-h-[52px]";
                 
-                // PRACTICE PHASE
                 if (quizPhase === 'practice') {
                     const isSelected = userAttempt && userAttempt.userSelection === opt.key;
                     if (isSelected) {
@@ -1494,14 +1736,12 @@
                         btn.className += " bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:border-brand-500 dark:hover:border-brand-500 hover:shadow-sm";
                     }
                     btn.addEventListener('click', () => handleSelection(opt.key));
-                } 
-                // SOLUTION PHASE
-                else {
+                } else {
                     const isSelected = userAttempt && userAttempt.userSelection === opt.key;
                     const isCorrectKey = opt.key === q.correctAnswer;
 
                     if (isCorrectKey) {
-                        btn.className += " bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500 dark:border-emerald-500 text-emerald-800 dark:text-emerald-400 font-medium";
+                        btn.className += " bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500 dark:border-emerald-500 text-emerald-800 dark:text-emerald-400 font-semibold";
                     } else if (isSelected && !isCorrectKey) {
                         btn.className += " bg-rose-50 dark:bg-rose-900/20 border-rose-500 dark:border-rose-500 text-rose-800 dark:text-rose-400";
                     } else {
@@ -1509,33 +1749,30 @@
                     }
                 }
 
-                // Dynamic icon representation
-                let iconHtml = `<div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center font-bold text-xs shrink-0 transition-all duration-300 group-hover:bg-brand-100 group-hover:text-brand-600 dark:group-hover:bg-brand-900/40 dark:group-hover:text-brand-400">${opt.key}</div>`;
+                let iconHtml = `<div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center font-bold text-xs shrink-0 transition group-hover:bg-brand-100 group-hover:text-brand-600 dark:group-hover:bg-brand-900/40 dark:group-hover:text-brand-400">${opt.key}</div>`;
                 
                 if (quizPhase === 'practice') {
                     if (userAttempt && userAttempt.userSelection === opt.key) {
-                        iconHtml = `<div class="w-7 h-7 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-brand-500/20"><i class="fa-solid fa-pen-fancy text-xs"></i></div>`;
+                        iconHtml = `<div class="w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-brand-500/20"><i class="fa-solid fa-pen-fancy text-xs"></i></div>`;
                     }
                 } else {
                     if (opt.key === q.correctAnswer) {
-                        iconHtml = `<div class="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/20"><i class="fa-solid fa-check text-xs"></i></div>`;
+                        iconHtml = `<div class="w-8 h-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/20"><i class="fa-solid fa-check text-xs"></i></div>`;
                     } else if (userAttempt && userAttempt.userSelection === opt.key) {
-                        iconHtml = `<div class="w-7 h-7 rounded-lg bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-rose-500/20"><i class="fa-solid fa-xmark text-xs"></i></div>`;
+                        iconHtml = `<div class="w-8 h-8 rounded-lg bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-rose-500/20"><i class="fa-solid fa-xmark text-xs"></i></div>`;
                     }
                 }
 
                 btn.innerHTML = `
-                    <div class="flex items-center space-x-3">
+                    <div class="flex items-center space-x-3.5">
                         ${iconHtml}
-                        <span class="text-sm font-medium">${opt.text}</span>
+                        <span class="text-sm sm:text-base font-medium">${opt.text}</span>
                     </div>
                 `;
                 optionsContainer.appendChild(btn);
             });
 
-            // "落子無悔" Rule Implementation:
-            // 1. Remove Previous Button during Practice phase completely!
-            // 2. Only show previous button in Solution (review) phase so users can read explanations.
+            // "No Regret" rules: Previous button remains hidden in practice, navigation dots disabled.
             if (quizPhase === 'solution') {
                 prevBtn.classList.remove('hidden');
                 prevBtn.disabled = currentIndex === 0;
@@ -1581,7 +1818,6 @@
             }
         }
 
-        // Formulate core solution explanations markup content
         function populateExplanation(questionObj, attemptObj) {
             const optionMap = {};
             questionObj.options.forEach(o => optionMap[o.key] = o.text);
@@ -1615,8 +1851,8 @@
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-medium truncate">${vocab.meaning}</p>
                     </div>
                     <button onclick="addWordFromQuiz('${escapedWord}', '${escapedMeaning}', '${escapedPhonetic}', '${escapedEx}', '${escapedExTrans}')" 
-                            class="p-2 bg-brand-50 hover:bg-brand-100 text-brand-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-brand-400 hover:text-brand-700 rounded-lg text-xs transition shrink-0" 
-                            title="加入我的專屬字卡庫">
+                            class="w-9 h-9 flex items-center justify-center bg-brand-50 hover:bg-brand-100 text-brand-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-brand-400 hover:text-brand-700 rounded-lg text-xs transition shrink-0 min-h-[36px] min-w-[36px]" 
+                            title="加入單字清單">
                         <i class="fa-solid fa-plus"></i>
                     </button>
                 `;
@@ -1635,7 +1871,6 @@
 
         nextBtn.addEventListener('click', () => {
             if (currentIndex < questions.length - 1) {
-                // Enforce answer selection in practice mode
                 if (quizPhase === 'practice' && answersState[currentIndex] === null) {
                     showToast("請先選擇本題的答案！");
                     return;
@@ -1661,14 +1896,13 @@
             explanationPanel.scrollIntoView({ behavior: 'smooth' });
         });
 
-        function evaluateQuizSummary() {
+        async function evaluateQuizSummary() {
             const completedCount = answersState.filter(a => a !== null).length;
             if (completedCount < questions.length) {
                 showToast("請先完成所有題目再進行結算喔！");
                 return;
             }
 
-            // Grade questions and automatically store wrong ones in 3-Correct system
             answersState.forEach((state, idx) => {
                 const q = questions[idx];
                 state.isCorrect = (state.userSelection === q.correctAnswer);
@@ -1681,7 +1915,7 @@
             quizPhase = 'solution';
             updateScoreText();
             updateWrongCountBadge();
-            initNavigation(); // Redraw navigation dots with colors
+            initNavigation();
 
             const correctCount = answersState.filter(a => a && a.isCorrect).length;
             const accuracy = Math.round((correctCount / questions.length) * 100);
@@ -1691,7 +1925,7 @@
 
             if (accuracy >= 80) {
                 accuracyDisplay.className = "text-2xl font-extrabold text-emerald-500";
-                summaryFeedbackText.innerHTML = `<span class="font-bold text-slate-800 dark:text-white block text-base mb-1">精采絕倫！</span>您的答對率非常優越。您對多益文法題型中的詞性判斷、從屬連接詞，以及商務高頻搭配詞，有著高於常人的直覺敏銳度。建議保持此答題手感！`;
+                summaryFeedbackText.innerHTML = `<span class="font-bold text-slate-800 dark:text-white block text-base mb-1">精采絕倫！</span>您的答對率非常優越。您對多益文法題型中的詞性判斷、從屬連接詞，以及商務高頻搭配詞，有著高於常人的直覺敏術。建議保持此答題手感！`;
             } else if (accuracy >= 60) {
                 accuracyDisplay.className = "text-2xl font-extrabold text-amber-500";
                 summaryFeedbackText.innerHTML = `<span class="font-bold text-slate-800 dark:text-white block text-base mb-1">表現不錯，還有躍升空間！</span>您已經穩穩踏在 600 分的基礎上。建議針對以下錯題加強文法盲點，即能直奔 700 分！`;
@@ -1717,7 +1951,7 @@
                         <span class="font-medium truncate text-slate-700 dark:text-slate-300">
                             <strong>第 ${wq.num} 題：</strong>${wq.q.category}
                         </span>
-                        <span class="text-rose-500 font-bold shrink-0 ml-2">已匯入複習區 <i class="fa-solid fa-download"></i></span>
+                        <span class="text-rose-500 font-bold shrink-0 ml-2">已匯入特訓區 <i class="fa-solid fa-download"></i></span>
                     `;
                     wrongQuestionsList.appendChild(item);
                 });
@@ -1730,6 +1964,9 @@
                 summaryModal.classList.add('opacity-100');
                 summaryCard.classList.remove('scale-95', 'opacity-0');
             }, 10);
+            
+            // 雲端保存答題狀況
+            await saveCloudData();
         }
 
         function closeSummaryModal() {
@@ -1760,14 +1997,15 @@
                     correctCount: 0
                 });
             } else {
-                exists.correctCount = 0; // reset
+                exists.correctCount = 0; // Reset progress back to zero
             }
             saveWrongReviewData();
         }
 
-        function saveWrongReviewData() {
+        async function saveWrongReviewData() {
             localStorage.setItem('toeic_wrong_review_v2', JSON.stringify(wrongQuestionsReview));
             updateWrongCountBadge();
+            await saveCloudData();
         }
 
         function updateWrongCountBadge() {
@@ -1821,10 +2059,10 @@
             wrongOptionsContainer.innerHTML = '';
             originalQuestionObj.options.forEach(opt => {
                 const btn = document.createElement('button');
-                btn.className = "w-full text-left p-4 rounded-xl border flex items-center justify-between bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:border-brand-500 transition group";
+                btn.className = "w-full text-left p-4.5 rounded-xl border flex items-center justify-between bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:border-brand-500 transition group min-h-[52px]";
                 btn.innerHTML = `
                     <div class="flex items-center space-x-3">
-                        <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center font-bold text-xs shrink-0 transition group-hover:bg-brand-100 group-hover:text-brand-600 dark:group-hover:bg-brand-900/40">${opt.key}</div>
+                        <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center font-bold text-xs shrink-0 transition group-hover:bg-brand-100 group-hover:text-brand-600 dark:group-hover:bg-brand-900/40">${opt.key}</div>
                         <span class="text-sm font-medium">${opt.text}</span>
                     </div>
                 `;
@@ -1833,7 +2071,7 @@
             });
         }
 
-        function submitWrongReviewAnswer(selectedKey, questionObj, reviewItem) {
+        async function submitWrongReviewAnswer(selectedKey, questionObj, reviewItem) {
             if (hasAnsweredCurrentReview) return;
             hasAnsweredCurrentReview = true;
 
@@ -1849,11 +2087,11 @@
                 }
             } else {
                 reviewItem.correctCount = 0; // Reset progress back to zero
-                wrongFeedbackText.innerHTML = `<span class="text-rose-500 font-black"><i class="fa-solid fa-circle-xmark"></i> 答錯了！進度已歸零，加油！</span>`;
+                wrongFeedbackText.innerHTML = `<span class="text-rose-500 font-black"><i class="fa-solid fa-circle-xmark"></i> 答錯了！進度已歸零</span>`;
                 showToast(`答錯！該題進度重置為 0/3`);
             }
 
-            saveWrongReviewData();
+            await saveWrongReviewData();
 
             Array.from(wrongOptionsContainer.children).forEach((btn, idx) => {
                 const optKey = questionObj.options[idx].key;
@@ -1863,15 +2101,15 @@
                 const isBtnSelected = optKey === selectedKey;
 
                 if (isBtnCorrect) {
-                    btn.className = "w-full text-left p-4 rounded-xl border flex items-center justify-between bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500 text-emerald-800 dark:text-emerald-400 font-semibold";
-                    btn.querySelector('.w-7').className = "w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/20";
-                    btn.querySelector('.w-7').innerHTML = `<i class="fa-solid fa-check text-xs"></i>`;
+                    btn.className = "w-full text-left p-4.5 rounded-xl border flex items-center justify-between bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500 text-emerald-800 dark:text-emerald-400 font-semibold min-h-[52px]";
+                    btn.querySelector('.w-8').className = "w-8 h-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/20";
+                    btn.querySelector('.w-8').innerHTML = `<i class="fa-solid fa-check text-xs"></i>`;
                 } else if (isBtnSelected && !isBtnCorrect) {
-                    btn.className = "w-full text-left p-4 rounded-xl border flex items-center justify-between bg-rose-50 dark:bg-rose-900/20 border-rose-500 text-rose-800 dark:text-rose-400";
-                    btn.querySelector('.w-7').className = "w-7 h-7 rounded-lg bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-rose-500/20";
-                    btn.querySelector('.w-7').innerHTML = `<i class="fa-solid fa-xmark text-xs"></i>`;
+                    btn.className = "w-full text-left p-4.5 rounded-xl border flex items-center justify-between bg-rose-50 dark:bg-rose-900/20 border-rose-500 text-rose-800 dark:text-rose-400 min-h-[52px]";
+                    btn.querySelector('.w-8').className = "w-8 h-8 rounded-lg bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-rose-500/20";
+                    btn.querySelector('.w-8').innerHTML = `<i class="fa-solid fa-xmark text-xs"></i>`;
                 } else {
-                    btn.className = "w-full text-left p-4 rounded-xl border flex items-center justify-between bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700/50 text-slate-400 opacity-60";
+                    btn.className = "w-full text-left p-4.5 rounded-xl border flex items-center justify-between bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700/50 text-slate-400 opacity-60 min-h-[52px]";
                 }
             });
 
@@ -1889,14 +2127,48 @@
             renderWrongReviewArea();
         });
 
-        // PERSONAL VOCABULARY LOCAL NOTEBOOK MANAGEMENTS
-        function saveNotebook() {
+        // PERSONAL VOCABULARY LOCAL NOTEBOOK MANAGEMENT
+        async function saveNotebook() {
             localStorage.setItem('toeic_custom_notebook', JSON.stringify(customNotebook));
             renderNotebookList();
+            await saveCloudData();
         }
 
-        // Render method which generates exquisite double sided 3D flip card elements inside vocabulary list
+        // Sorting Logic
+        function sortNotebook() {
+            const sortBy = vocabSortSelect.value;
+            customNotebook.sort((a, b) => {
+                const timeA = a.addedAt || 0;
+                const timeB = b.addedAt || 0;
+                const masteryA = a.mastery || 3;
+                const masteryB = b.mastery || 3;
+                const wordA = (a.word || '').toLowerCase();
+                const wordB = (b.word || '').toLowerCase();
+
+                if (sortBy === 'time_desc') {
+                    return timeB - timeA;
+                } else if (sortBy === 'time_asc') {
+                    return timeA - timeB;
+                } else if (sortBy === 'alpha') {
+                    return wordA.localeCompare(wordB);
+                } else if (sortBy === 'mastery_asc') {
+                    return masteryA - masteryB;
+                } else if (sortBy === 'mastery_desc') {
+                    return masteryB - masteryA;
+                }
+                return 0;
+            });
+        }
+
+        vocabSortSelect.addEventListener('change', () => {
+            renderNotebookList();
+        });
+
+        // Render method which generates double-sided 3D flip card elements inside notebook list
         function renderNotebookList() {
+            // Sort notebook dynamically first based on current select settings
+            sortNotebook();
+
             notebookListContainer.innerHTML = '';
             vocabCountText.textContent = `單字庫 (共 ${customNotebook.length} 個)`;
 
@@ -1912,9 +2184,8 @@
 
             customNotebook.forEach((item, index) => {
                 const cardContainer = document.createElement('div');
-                cardContainer.className = "perspective-1000 w-full h-[162px] cursor-pointer mb-3 select-none";
+                cardContainer.className = "perspective-1000 w-full h-[155px] cursor-pointer mb-3 select-none";
                 
-                // Clicking on the card body toggles the flip state
                 cardContainer.onclick = function(e) {
                     if (e.target.closest('button') || e.target.closest('a')) return;
                     this.classList.toggle('flipped');
@@ -1922,6 +2193,21 @@
 
                 const escapedWord = item.word.replace(/'/g, "\\'");
                 const escapedExample = item.example ? item.example.replace(/'/g, "\\'") : "";
+                
+                // Get mastery badge / indicator
+                const mLevel = item.mastery || 3;
+                let masteryBadge = '';
+                if (mLevel === 1) {
+                    masteryBadge = '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50">需加強 ⚪</span>';
+                } else if (mLevel === 2) {
+                    masteryBadge = '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-100 dark:border-amber-900/50">不熟練 🟡</span>';
+                } else if (mLevel === 4) {
+                    masteryBadge = '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50">良好 🔵</span>';
+                } else if (mLevel === 5) {
+                    masteryBadge = '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50">已掌握 🟢</span>';
+                } else {
+                    masteryBadge = '<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700">一般 🔘</span>';
+                }
 
                 cardContainer.innerHTML = `
                     <div class="flip-card-inner relative w-full h-full duration-500">
@@ -1929,19 +2215,22 @@
                         <!-- CARD FRONT FACE -->
                         <div class="backface-hidden absolute inset-0 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 p-4 flex flex-col justify-between shadow-sm hover:shadow-md transition duration-300">
                             <div class="flex justify-between items-center w-full shrink-0">
-                                <span class="text-[9px] font-black tracking-widest text-brand-500 bg-brand-50 dark:bg-slate-700/50 px-2 py-0.5 rounded-md uppercase">Front</span>
-                                <button onclick="event.stopPropagation(); speakWordText('${escapedWord}')" class="p-1.5 bg-slate-50 hover:bg-brand-50 dark:bg-slate-700/30 dark:hover:bg-slate-700 text-brand-500 rounded-lg transition" title="朗讀單字">
+                                <div class="flex items-center space-x-1.5">
+                                    <span class="text-[9px] font-black tracking-widest text-brand-500 bg-brand-50 dark:bg-slate-700/50 px-2 py-0.5 rounded-md uppercase">Front</span>
+                                    ${masteryBadge}
+                                </div>
+                                <button onclick="event.stopPropagation(); speakWordText('${escapedWord}')" class="w-9 h-9 flex items-center justify-center bg-slate-50 hover:bg-brand-50 dark:bg-slate-700/30 dark:hover:bg-slate-700 text-brand-500 rounded-full transition min-h-[36px] min-w-[36px]" title="朗讀單字">
                                     <i class="fa-solid fa-volume-high text-xs"></i>
                                 </button>
                             </div>
                             
                             <div class="text-center py-1">
                                 <h4 class="font-black text-lg text-slate-800 dark:text-white tracking-tight truncate">${item.word}</h4>
-                                ${item.phonetic ? `<p class="text-[11px] text-slate-400 font-mono mt-1">${item.phonetic}</p>` : ''}
+                                ${item.phonetic ? `<p class="text-[11px] text-slate-400 font-mono mt-0.5">${item.phonetic}</p>` : ''}
                             </div>
                             
-                            <div class="text-center text-[10px] text-slate-400 dark:text-slate-500 flex items-center justify-center gap-1 shrink-0">
-                                <i class="fa-solid fa-arrows-rotate text-[9px] animate-pulse"></i> 點擊翻看詳細釋義與例句
+                            <div class="text-center text-[9px] text-slate-400 dark:text-slate-500 flex items-center justify-center gap-1 shrink-0">
+                                <i class="fa-solid fa-arrows-rotate text-[8px] animate-pulse"></i> 點擊翻看詳細釋義與例句
                             </div>
                         </div>
 
@@ -1949,18 +2238,18 @@
                         <div class="backface-hidden rotate-y-180 absolute inset-0 bg-gradient-to-b from-white to-slate-50/50 dark:from-slate-800 dark:to-slate-900/50 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 p-4 flex flex-col justify-between shadow-md">
                             <div class="flex justify-between items-center w-full shrink-0 pb-1 border-b border-slate-100 dark:border-slate-700/50">
                                 <span class="text-[9px] font-black tracking-widest text-emerald-500 bg-emerald-50 dark:bg-slate-700/30 px-2 py-0.5 rounded-md uppercase">Back</span>
-                                <button onclick="event.stopPropagation(); deleteNotebookWord(${index})" class="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition" title="移除此單字">
+                                <button onclick="event.stopPropagation(); deleteNotebookWord(${index})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-full transition min-h-[32px] min-w-[32px]" title="移除此單字">
                                     <i class="fa-solid fa-trash-can text-xs"></i>
                                 </button>
                             </div>
                             
                             <!-- Middle content scroll area -->
-                            <div class="flex-1 overflow-y-auto custom-scrollbar my-2 pr-1 text-left">
+                            <div class="flex-1 overflow-y-auto custom-scrollbar my-1.5 pr-1 text-left">
                                 <p class="text-xs font-black text-brand-600 dark:text-brand-400 mb-1 leading-normal">${item.meaning}</p>
                                 ${item.example ? `
-                                    <div class="mt-1.5 bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl border border-slate-100 dark:border-slate-700/40 text-[10px] leading-relaxed">
+                                    <div class="mt-1 bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl border border-slate-100 dark:border-slate-700/40 text-[10px] leading-relaxed">
                                         <p class="font-medium text-slate-600 dark:text-slate-300">${item.example}</p>
-                                        ${item.exampleTranslation ? `<p class="text-slate-400 dark:text-slate-500 mt-1">${item.exampleTranslation}</p>` : ''}
+                                        ${item.exampleTranslation ? `<p class="text-slate-400 dark:text-slate-500 mt-0.5">${item.exampleTranslation}</p>` : ''}
                                     </div>
                                 ` : ''}
                             </div>
@@ -1968,8 +2257,8 @@
                             <div class="flex justify-between items-center w-full shrink-0 pt-1 border-t border-slate-100 dark:border-slate-700/50">
                                 <span class="text-[9px] text-slate-400"><i class="fa-solid fa-arrow-left-rotate"></i> 點擊翻回正面</span>
                                 ${item.example ? `
-                                    <button onclick="event.stopPropagation(); speakWordText('${escapedExample}')" class="p-1 bg-slate-100 hover:bg-brand-50 dark:bg-slate-700/50 dark:hover:bg-slate-700 text-slate-500 hover:text-brand-500 rounded-lg transition flex items-center gap-1 text-[9px]" title="朗讀整句例句">
-                                        <i class="fa-solid fa-volume-high text-[10px]"></i> 聽例句
+                                    <button onclick="event.stopPropagation(); speakWordText('${escapedExample}')" class="px-2 py-1 bg-slate-100 hover:bg-brand-50 dark:bg-slate-700/50 dark:hover:bg-slate-700 text-slate-500 hover:text-brand-500 rounded-lg transition flex items-center gap-1 text-[9px] min-h-[28px]" title="朗讀整句例句">
+                                        <i class="fa-solid fa-volume-high text-[9px]"></i> 聽例句
                                     </button>
                                 ` : ''}
                             </div>
@@ -1981,7 +2270,6 @@
             });
         }
 
-        // Native Web speech TTS synthesizers
         window.speakWordText = function(textToSpeak) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
@@ -2077,7 +2365,9 @@
                     meaning: completeMeaning,
                     phonetic: phoneticResult,
                     example: foundExample,
-                    exampleTranslation: foundExampleTranslation
+                    exampleTranslation: foundExampleTranslation,
+                    addedAt: Date.now(),
+                    mastery: 3 // Default mastery level "normal"
                 };
 
                 const existIndex = customNotebook.findIndex(item => item.word.toLowerCase() === cleanedWord);
@@ -2089,7 +2379,7 @@
                     showToast(`智慧新增單字成功: "${wordToQuery}"`);
                 }
 
-                saveNotebook();
+                await saveNotebook();
                 addWordInput.value = '';
 
             } catch (error) {
@@ -2110,7 +2400,7 @@
         });
 
         // Quick import directly from solutions explanations panel
-        window.addWordFromQuiz = function(word, meaning, phonetic, example, exampleTranslation) {
+        window.addWordFromQuiz = async function(word, meaning, phonetic, example, exampleTranslation) {
             if (customNotebook.some(item => item.word.toLowerCase() === word.toLowerCase())) {
                 showToast("此單字已被加入字卡庫！");
                 return;
@@ -2121,29 +2411,33 @@
                 meaning: meaning,
                 phonetic: phonetic || "",
                 example: example || "Let's memorize this business English phrase.",
-                exampleTranslation: exampleTranslation || "讓我們記住這個商業英語片語。"
+                exampleTranslation: exampleTranslation || "讓我們記住這個商業英語片語。",
+                addedAt: Date.now(),
+                mastery: 3
             });
 
-            saveNotebook();
-            showToast(`已將 "${word}" 儲存至字卡庫！`);
+            await saveNotebook();
+            showToast(`已將 "${word}" 儲存至單字清單！`);
 
             if (vocabSidePanel.classList.contains('hidden')) {
                 vocabUpdateBadge.classList.remove('hidden');
             }
         };
 
-        window.deleteNotebookWord = function(index) {
+        window.deleteNotebookWord = async function(index) {
             const removedWord = customNotebook[index].word;
             customNotebook.splice(index, 1);
-            saveNotebook();
+            await saveNotebook();
             showToast(`已移除單字: "${removedWord}"`);
         };
 
-        clearAllVocabBtn.addEventListener('click', () => {
+        clearAllVocabBtn.addEventListener('click', async () => {
             if (customNotebook.length === 0) return;
-            customNotebook = [];
-            saveNotebook();
-            showToast("字彙庫已完全清空！");
+            if (confirm("您確定要完全清空所有自訂字卡嗎？")) {
+                customNotebook = [];
+                await saveNotebook();
+                showToast("單字本已完全清空！");
+            }
         });
 
         // ANKI FLASHCARDS STUDY ENGINE
@@ -2162,15 +2456,16 @@
 
         function setActiveTab(mode) {
             if (mode === 'list') {
-                showListTab.className = "flex-1 py-2 text-xs font-semibold rounded-lg transition-all duration-200 bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white";
-                showReviewTab.className = "flex-1 py-2 text-xs font-semibold rounded-lg transition-all duration-200 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300";
+                showListTab.className = "flex-1 text-xs font-bold rounded-lg transition-all duration-200 bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white h-full";
+                showReviewTab.className = "flex-1 text-xs font-bold rounded-lg transition-all duration-200 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 h-full";
                 
                 viewListContainer.classList.remove('hidden');
                 viewReviewContainer.classList.add('hidden');
                 viewFinishedContainer.classList.add('hidden');
+                renderNotebookList();
             } else {
-                showReviewTab.className = "flex-1 py-2 text-xs font-semibold rounded-lg transition-all duration-200 bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white";
-                showListTab.className = "flex-1 py-2 text-xs font-semibold rounded-lg transition-all duration-200 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300";
+                showReviewTab.className = "flex-1 text-xs font-bold rounded-lg transition-all duration-200 bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white h-full";
+                showListTab.className = "flex-1 text-xs font-bold rounded-lg transition-all duration-200 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 h-full";
                 
                 viewListContainer.classList.add('hidden');
             }
@@ -2183,13 +2478,20 @@
         });
 
         function startAnkiSession() {
-            reviewQueue = JSON.parse(JSON.stringify(customNotebook));
-            
-            // Fisher-Yates Shuffle
-            for (let i = reviewQueue.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [reviewQueue[i], reviewQueue[j]] = [reviewQueue[j], reviewQueue[i]];
+            if (customNotebook.length === 0) {
+                showToast("您的單字庫是空的！請先新增一些單字後再開始複習。");
+                return;
             }
+
+            // Create a deep copy of the custom notebook and shuffle it
+            let allShuffled = JSON.parse(JSON.stringify(customNotebook));
+            for (let i = allShuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allShuffled[i], allShuffled[j]] = [allShuffled[j], allShuffled[i]];
+            }
+
+            // Randomly select up to 20 words from the shuffled pool for today's review session
+            reviewQueue = allShuffled.slice(0, 20);
 
             totalCardsInSession = reviewQueue.length;
             counters = { Again: 0, Hard: 0, Good: 0, Easy: 0 };
@@ -2206,6 +2508,16 @@
             countHard.textContent = counters.Hard;
             countGood.textContent = counters.Good;
             countEasy.textContent = counters.Easy;
+        }
+
+        // Mastery score update when reviewing cards (Again:1, Hard:2, Good:4, Easy:5)
+        async function updateWordMastery(wordVal, levelVal) {
+            const foundIndex = customNotebook.findIndex(w => w.word.toLowerCase() === wordVal.toLowerCase());
+            if (foundIndex !== -1) {
+                customNotebook[foundIndex].mastery = levelVal;
+                localStorage.setItem('toeic_custom_notebook', JSON.stringify(customNotebook));
+                await saveCloudData();
+            }
         }
 
         function renderCurrentAnkiCard() {
@@ -2241,67 +2553,68 @@
             };
         }
 
-        // Spaced Repetition deck re-arrangers
-        btnAgain.addEventListener('click', (e) => {
+        // Anki SRS Queue modifications & updates mastery
+        btnAgain.addEventListener('click', async (e) => {
             e.stopPropagation();
             if (reviewQueue.length === 0) return;
             
             const current = reviewQueue.shift();
             counters.Again++;
             updateCountersUI();
+            await updateWordMastery(current.word, 1); // mastery level 1
 
-            // Insert into index 1 (the 2nd card)
             if (reviewQueue.length >= 1) {
                 reviewQueue.splice(1, 0, current);
             } else {
                 reviewQueue.push(current);
             }
-            showToast("「Again」: 字卡已重新插至下一張之後！");
+            showToast("「Again」: 已重新插至下一張之後！");
             renderCurrentAnkiCard();
         });
 
-        btnHard.addEventListener('click', (e) => {
+        btnHard.addEventListener('click', async (e) => {
             e.stopPropagation();
             if (reviewQueue.length === 0) return;
 
             const current = reviewQueue.shift();
             counters.Hard++;
             updateCountersUI();
+            await updateWordMastery(current.word, 2); // mastery level 2
 
-            // Insert into the middle of queue
             if (reviewQueue.length > 0) {
                 const middleIndex = Math.floor(reviewQueue.length / 2);
                 reviewQueue.splice(middleIndex, 0, current);
             } else {
                 reviewQueue.push(current);
             }
-            showToast("「Hard」: 字卡已分配至剩餘卡片的中間！");
+            showToast("「Hard」: 已分配至剩餘卡片的中間！");
             renderCurrentAnkiCard();
         });
 
-        btnGood.addEventListener('click', (e) => {
+        btnGood.addEventListener('click', async (e) => {
             e.stopPropagation();
             if (reviewQueue.length === 0) return;
 
             const current = reviewQueue.shift();
             counters.Good++;
             updateCountersUI();
+            await updateWordMastery(current.word, 4); // mastery level 4
 
-            // Append to deck tail
             reviewQueue.push(current);
-            showToast("「Good」: 已將此字卡推遲至隊尾。");
+            showToast("「Good」: 已將此字卡推遲至最後。");
             renderCurrentAnkiCard();
         });
 
-        btnEasy.addEventListener('click', (e) => {
+        btnEasy.addEventListener('click', async (e) => {
             e.stopPropagation();
             if (reviewQueue.length === 0) return;
 
-            reviewQueue.shift();
+            const current = reviewQueue.shift();
             counters.Easy++;
             updateCountersUI();
+            await updateWordMastery(current.word, 5); // mastery level 5
 
-            showToast("「Easy」: 已從本次練習中移除！");
+            showToast("「Easy」: 已自本次練習移出。");
             renderCurrentAnkiCard();
         });
 
@@ -2319,13 +2632,12 @@
             startAnkiSession();
         });
 
-        // Beautiful toast notification module
         function showToast(message) {
             const toast = document.createElement('div');
-            toast.className = "fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-6 py-3.5 rounded-2xl shadow-xl font-bold text-sm flex items-center space-x-2.5 animate-bounce";
+            toast.className = "fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-5 py-3 rounded-2xl shadow-xl font-bold text-xs flex items-center space-x-2 animate-bounce max-w-[90vw]";
             toast.innerHTML = `
-                <i class="fa-solid fa-circle-info text-emerald-500 text-base"></i>
-                <span>${message}</span>
+                <i class="fa-solid fa-circle-info text-emerald-500 text-sm shrink-0"></i>
+                <span class="truncate">${message}</span>
             `;
             document.body.appendChild(toast);
             setTimeout(() => {
@@ -2335,7 +2647,6 @@
         }
 
         window.onload = function() {
-            // Pick initial 20 questions
             drawRandom20Questions();
             renderNotebookList();
             updateWrongCountBadge();
