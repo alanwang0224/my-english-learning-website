@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700&family=Noto+Sans+TC:wght=300;400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <!-- FontAwesome for gorgeous icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Supabase JS CDN -->
@@ -1098,7 +1098,7 @@
                 correctAnswer: "A",
                 explanation: `在電腦與資訊技術領域，"the server will be down" 表示「伺服器將停機/停止服務」，最符合維護保養 (maintenance) 的語境。`,
                 vocabulary: [{ word: "maintenance", phonetic: "/ˈmeɪntənəns/", meaning: "維修、保養 (n.)", example: "The database is closed for routine maintenance.", exampleTranslation: "資料庫因例行維護而關閉。" }],
-                translation: "IT 部部門宣佈，伺服器將在午夜至凌晨 4:00 期間因例行維護而關機停用。"
+                translation: "IT 部門宣佈，伺服器將在午夜至凌晨 4:00 期間因例行維護而關機停用。"
             },
             {
                 id: 31,
@@ -1156,7 +1156,7 @@
                     { key: "D", text: "contracted" }
                 ],
                 correctAnswer: "A",
-                explanation: `"secure a contract" (簽下/爭取到合約) 為商務英語常用詞語。 lucative contract 意為「有利可圖、獲利豐厚的合約」。`,
+                explanation: `"secure a contract" (簽下/爭取到合約) 為商務英語常用詞語。 lucrative contract 意為「有利可圖、獲利豐厚的合約」。`,
                 vocabulary: [{ word: "lucrative", phonetic: "/ˈlukrətɪv/", meaning: "有利可圖的、獲利豐厚的 (adj.)", example: "The merger turned out to be a highly lucrative deal.", exampleTranslation: "事實證明，這次合併是一筆利潤極高的交易。" }],
                 translation: "專案經理高興地宣佈，我們公司已與一家主要連鎖零售商簽署了一份獲利豐厚的合約。"
             },
@@ -1470,18 +1470,6 @@
             };
         }
 
-        // 強制徹底清除 Supabase SDK 在 LocalStorage 中產生的所有快取與 Session 標記，避免 Session 死鎖
-        function clearSupabaseTokens() {
-            const keysToRemove = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && (key.includes('auth-token') || key.includes('supabase') || key.startsWith('sb-'))) {
-                    keysToRemove.push(key);
-                }
-            }
-            keysToRemove.forEach(k => localStorage.removeItem(k));
-        }
-
         // ----------------- Supabase 雲端與本地快取資料同步流 -----------------
         async function fetchCloudData() {
             if (!supabaseClient || !currentUser) return;
@@ -1598,7 +1586,7 @@
             updateWrongCountBadge();
         }
 
-        // 初始化與監聽 Auth 狀態 (監聽 auth 變動，自動處理 session)
+        // 初始化與監聽 Auth 狀態 (修復了原代碼中 onAuthStateChange 缺少 d 的嚴重 API Bug)
         if (supabaseClient) {
             supabaseClient.auth.onAuthStateChange(async (event, session) => {
                 try {
@@ -1614,7 +1602,7 @@
                         // 載入該使用者進行中的測驗
                         loadUserActiveQuizProgress(currentUser.id);
                         
-                        showToast(`雲端同步成功！`);
+                        showToast(`☁️ 已成功與雲端安全同步！`);
                     } else {
                         triggerGuestFallback();
                     }
@@ -1625,19 +1613,17 @@
             });
         }
 
-        // Auth Buttons Click events (全面重構登出物理清除鏈)
+        // Auth Buttons Click events
         cloudAuthBtn.addEventListener('click', async () => {
             if (currentUser) {
                 showCustomConfirm("您確定要登出目前雲端帳號嗎？數據將保留在雲端與此瀏覽器中。", async () => {
                     try {
-                        // 1. 嘗試呼叫 Supabase 端登出
+                        // 嘗試呼叫 Supabase 端登出，SDK會自動幫我們清理本地的 auth-token 快取，切勿手動暴力清除
                         await supabaseClient.auth.signOut();
                     } catch (signOutError) {
                         console.error("Supabase 伺服器登出回報異常:", signOutError);
                     } finally {
-                        // 2. 物理性強制清除瀏覽器中的 Supabase 舊 Session 憑證
-                        clearSupabaseTokens();
-                        // 3. 安全退回到訪客模式，不重整網頁以保留本地良好體驗
+                        // 安全退回到訪客模式，不重整網頁以保留本地良好體驗
                         triggerGuestFallback();
                         showToast("已成功安全登出！");
                     }
@@ -1655,7 +1641,7 @@
             authModal.classList.add('hidden');
         });
 
-        // Email Sign-in / Sign-up (強制預清空機制)
+        // Email Sign-in / Sign-up
         emailAuthForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = authEmail.value.trim();
@@ -1672,8 +1658,8 @@
                 }
             } else {
                 try {
-                    // 登入前，保險清空一次先前遺留的破損 session token
-                    clearSupabaseTokens();
+                    // 登入前，讓 SDK 先完整執行一次登出，以徹底洗淨前次可能遺留或損毀的 session 指針
+                    await supabaseClient.auth.signOut();
                     
                     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
                     if (error) {
@@ -1697,16 +1683,19 @@
         // Google OAuth Sign-In
         googleAuthBtn.addEventListener('click', async () => {
             if (!supabaseClient) return;
-            // 登入前先清空舊的 session state 防止死鎖
-            clearSupabaseTokens();
-            const { data, error } = await supabaseClient.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: window.location.href
+            try {
+                await supabaseClient.auth.signOut();
+                const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: window.location.href
+                    }
+                });
+                if (error) {
+                    showToast(`Google 登入重定向失敗: ${error.message}`);
                 }
-            });
-            if (error) {
-                showToast(`Google 登入重定向失敗: ${error.message}`);
+            } catch (err) {
+                console.error("OAuth 初始化崩潰:", err);
             }
         });
 
